@@ -55,10 +55,12 @@ public class SanityHelper implements Serializable {
 
     private static final long serialVersionUID = 55L;
     public Double maleWc = 0d;
+    public Double commonWc=0d;
     public Double femaleWc = 0d;
     public Double urinal = 0d;
     public Double maleWash = 0d;
     public Double femaleWash = 0d;
+    public Double commonWash= 0d;
     public Double maleBath = 0d;
     public Double femaleBath = 0d;
     public Double commonBath = 0d;
@@ -69,5 +71,6 @@ public class SanityHelper implements Serializable {
     public String ruleDescription;
     public Double failedAreaSpecialWc = 0d;
     public Double failedDimensionSpecialWc = 0d;
-
+    public Double drinkingWater=0d;
+    public boolean drinkingWaterEachFloor=false;
 }

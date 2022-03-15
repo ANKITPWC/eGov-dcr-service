@@ -47,121 +47,326 @@
 
 package org.egov.edcr.feature;
 
+import static org.egov.edcr.constants.DxfFileConstants.COLOR_GENERATOR_ROOM;
+import static org.egov.edcr.constants.DxfFileConstants.COLOR_LAUNDRY_ROOM;
+import static org.egov.edcr.constants.DxfFileConstants.COLOR_LIFT_LOBBY;
+import static org.egov.edcr.constants.DxfFileConstants.COLOR_MEP_ROOM;
+import static org.egov.edcr.constants.DxfFileConstants.COLOR_RESIDENTIAL_ROOM_MECHANICALLY_VENTILATED;
+import static org.egov.edcr.constants.DxfFileConstants.COLOR_RESIDENTIAL_ROOM_NATURALLY_VENTILATED;
+import static org.egov.edcr.constants.DxfFileConstants.COLOR_STILT_FLOOR;
+
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.egov.common.entity.edcr.Block;
 import org.egov.common.entity.edcr.Floor;
+import org.egov.common.entity.edcr.Measurement;
+import org.egov.common.entity.edcr.OccupancyTypeHelper;
 import org.egov.common.entity.edcr.Plan;
 import org.egov.common.entity.edcr.Result;
+import org.egov.common.entity.edcr.Room;
 import org.egov.common.entity.edcr.ScrutinyDetail;
+import org.egov.edcr.constants.DxfFileConstants;
 import org.springframework.stereotype.Service;
 
 @Service
 public class Basement extends FeatureProcess {
 
-    private static final Logger LOG = Logger.getLogger(Basement.class);
-    private static final String RULE_46_6A = "46-6a";
-    private static final String RULE_46_6C = "46-6c";
-    public static final String BASEMENT_DESCRIPTION_ONE = "Height from the floor to the soffit of the roof slab or ceiling";
-    public static final String BASEMENT_DESCRIPTION_TWO = "Minimum height of the ceiling of upper basement above ground level";
+	private static final Logger LOG = Logger.getLogger(Basement.class);
+	private static final String RULE_46_6A = "46-6a";
+	private static final String RULE_46_6C = "46-6c";
+	public static final String BASEMENT_REQUIRED = "Basement required";
+	public static final String BASEMENT_DESCRIPTION_ONE = "Height from the floor to the soffit of the roof slab or ceiling";
+	public static final String BASEMENT_DESCRIPTION_TWO = "Minimum height of the ceiling of upper basement above ground level";
 
-    @Override
-    public Plan validate(Plan pl) {
+	@Override
+	public Plan validate(Plan pl) {
+		validateAllowedRoomInBasment(pl);
+		OccupancyTypeHelper helper = pl.getVirtualBuilding().getMostRestrictiveFarHelper();
+		BigDecimal plotArea = pl.getPlot().getArea();
 
-        return pl;
-    }
+		for (Block block : pl.getBlocks()) {
+			int totalNoOfBasement = noOfBasement(pl, block);
+			int maxAllowedBasement = 0;
+			BigDecimal maxAreaAllowed = BigDecimal.ZERO;
+			if (DxfFileConstants.PLOTTED_DETACHED_OR_INDIVIDUAL_RESIDENTIAL_BUILDING
+					.equals(helper.getSubtype().getCode())
+					|| DxfFileConstants.SEMI_DETACHED.equals(helper.getSubtype().getCode())
+					|| DxfFileConstants.ROW_HOUSING.equals(helper.getSubtype().getCode())) {
+				maxAllowedBasement = 1;
+				if (plotArea.compareTo(new BigDecimal("500")) <= 0) {
+					if (block.getBuilding().getCoverageArea() != null)
+						maxAreaAllowed = block.getBuilding().getCoverageArea().multiply(new BigDecimal("0.5"));
+				}
 
-    @Override
-    public Plan process(Plan pl) {
+				if (totalNoOfBasement > maxAllowedBasement)
+					pl.addError("Basement error", "Maximum one basement is allowed");
 
-        ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
-        scrutinyDetail.setKey("Common_Basement");
-        scrutinyDetail.addColumnHeading(1, RULE_NO);
-        scrutinyDetail.addColumnHeading(2, DESCRIPTION);
-        scrutinyDetail.addColumnHeading(3, REQUIRED);
-        scrutinyDetail.addColumnHeading(4, PROVIDED);
-        scrutinyDetail.addColumnHeading(5, STATUS);
+				if (totalAreaOfBasement(block).compareTo(maxAreaAllowed) > 0)
+					pl.addError("Basement ARea", "Maximum of 50% of the covered area is alowed");
+			} else if (DxfFileConstants.OC_RESIDENTIAL.equals(helper.getType().getCode())
+					|| DxfFileConstants.PUBLIC_AND_SEMI_PUBLIC_USE_ZONES.equals(helper.getType().getCode())
+					|| DxfFileConstants.PUBLIC_UTILITY_BLDG.equals(helper.getType().getCode())
+					|| DxfFileConstants.OC_INDUSTRIAL_ZONE.equals(helper.getType().getCode())
+					|| DxfFileConstants.OC_EDUCATION.equals(helper.getType().getCode())
+					|| DxfFileConstants.OC_TRANSPORTATION.equals(helper.getType().getCode())
+					|| DxfFileConstants.OC_AGRICULTURE.equals(helper.getType().getCode())
+					|| DxfFileConstants.OC_MIXED_USE.equals(helper.getType().getCode())) {
 
-        Map<String, String> details = new HashMap<>();
+				if (plotArea.compareTo(new BigDecimal("500")) < 0) {
+					if (totalNoOfBasement > 0)
+						pl.addError("Basement error", "basement is not allowed");
+				} else if (plotArea.compareTo(new BigDecimal("500")) >= 0
+						&& plotArea.compareTo(new BigDecimal("1000")) <= 0) {
+					if (totalNoOfBasement > 1)
+						pl.addError("Basement error", "Maximum one basement is not allowed");
+				}
+			}
 
-        BigDecimal minLength = BigDecimal.ZERO;
+			if (DxfFileConstants.OC_COMMERCIAL.equals(helper.getType().getCode())) {
+				maxAllowedBasement = 1;
+				if (plotArea.compareTo(new BigDecimal("500")) <= 0) {
+					if (totalNoOfBasement > 1)
+						pl.addError("Basement error", "Maximum one basement is allowed");
 
-        if (pl.getBlocks() != null) {
-            for (Block b : pl.getBlocks()) {
-                if (b.getBuilding() != null && b.getBuilding().getFloors() != null
-                        && !b.getBuilding().getFloors().isEmpty()) {
+					if (block.getBuilding().getCoverageArea() != null)
+						maxAreaAllowed = block.getBuilding().getCoverageArea().multiply(new BigDecimal("0.5"));
 
-                    for (Floor f : b.getBuilding().getFloors()) {
+					if (totalAreaOfBasement(block).compareTo(maxAreaAllowed) > 0)
+						pl.addError("Basement ARea", "Maximum of 50% of the covered area is alowed");
+				} else if (plotArea.compareTo(new BigDecimal("500")) >= 0
+						&& plotArea.compareTo(new BigDecimal("1000")) <= 0) {
+					if (totalNoOfBasement > 1)
+						pl.addError("Basement error", "Maximum one basement is allowed");
+				}
 
-                        if (f.getNumber() == -1) {
+			}
 
-                            if (f.getHeightFromTheFloorToCeiling() != null
-                                    && !f.getHeightFromTheFloorToCeiling().isEmpty()) {
+		}
 
-                                minLength = f.getHeightFromTheFloorToCeiling().stream().reduce(BigDecimal::min).get();
+		return pl;
+	}
 
-                                if (minLength.compareTo(BigDecimal.valueOf(2.4)) >= 0) {
-                                    details.put(RULE_NO, RULE_46_6A);
-                                    details.put(DESCRIPTION, BASEMENT_DESCRIPTION_ONE);
-                                    details.put(REQUIRED, ">= 2.4");
-                                    details.put(PROVIDED, minLength.toString());
-                                    details.put(STATUS, Result.Accepted.getResultVal());
-                                    scrutinyDetail.getDetail().add(details);
+	private void validateAllowedRoomInBasment(Plan pl) {
+		Map<Integer, String> allowedRooms = getAllowedRoomList(pl);
 
-                                } else {
-                                    details = new HashMap<>();
-                                    details.put(RULE_NO, RULE_46_6A);
-                                    details.put(DESCRIPTION, BASEMENT_DESCRIPTION_ONE);
-                                    details.put(REQUIRED, ">= 2.4");
-                                    details.put(PROVIDED, minLength.toString());
-                                    details.put(STATUS, Result.Not_Accepted.getResultVal());
-                                    scrutinyDetail.getDetail().add(details);
-                                }
-                            }
-                            minLength = BigDecimal.ZERO;
-                            if (f.getHeightOfTheCeilingOfUpperBasement() != null
-                                    && !f.getHeightOfTheCeilingOfUpperBasement().isEmpty()) {
+		for (Block block : pl.getBlocks()) {
+			for (Floor floor : block.getBuilding().getFloors()) {
+				if (floor.getNumber() < 0) {
+					for (Room room : floor.getRegularRooms()) {
+						for (Measurement measurement : room.getRooms()) {
+							if (!allowedRooms.keySet().contains(measurement.getColorCode())) {
+								pl.addError("BasmentNotAllowedRoom"+measurement.getColorCode(),"Prohibited Room is present in Basment, Block "+block.getNumber()+" floor "+floor.getNumber()+" colorcode "+measurement.getColorCode());
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
-                                minLength = f.getHeightOfTheCeilingOfUpperBasement().stream().reduce(BigDecimal::min).get();
+	private Map<Integer, String> getAllowedRoomList(Plan pl) {
+		Map<Integer, String> allowedRooms = new HashMap<>();
+		Map<String, Integer> heightOfRoomFeaturesColor = pl.getSubFeatureColorCodesMaster().get("HeightOfRoom");
+		OccupancyTypeHelper typeHelper = pl.getVirtualBuilding().getMostRestrictiveFarHelper();
 
-                                if (minLength.compareTo(BigDecimal.valueOf(1.2)) >= 0
-                                        && minLength.compareTo(BigDecimal.valueOf(1.5)) < 0) {
-                                    details = new HashMap<>();
-                                    details.put(RULE_NO, RULE_46_6C);
-                                    details.put(DESCRIPTION, BASEMENT_DESCRIPTION_TWO);
-                                    details.put(REQUIRED, "Between 1.2 to 1.5");
-                                    details.put(PROVIDED, minLength.toString());
-                                    details.put(STATUS, Result.Accepted.getResultVal());
-                                    scrutinyDetail.getDetail().add(details);
+		if (DxfFileConstants.OC_RESIDENTIAL.equals(typeHelper.getType().getCode())
+				|| DxfFileConstants.OC_PUBLIC_SEMI_PUBLIC_OR_INSTITUTIONAL.equals(typeHelper.getType().getCode())
+				|| DxfFileConstants.OC_EDUCATION.equals(typeHelper.getType().getCode())
+				|| DxfFileConstants.OC_AGRICULTURE.equals(typeHelper.getType().getCode())) {
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_STUDY_ROOM),
+					DxfFileConstants.COLOR_STUDY_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_LIBRARY_ROOM),
+					DxfFileConstants.COLOR_LIBRARY_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_GAME_ROOM),
+					DxfFileConstants.COLOR_GAME_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_STORE_ROOM),
+					DxfFileConstants.COLOR_STORE_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_CCTV_ROOM),
+					DxfFileConstants.COLOR_CCTV_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_SERVICE_ROOM),
+					DxfFileConstants.COLOR_SERVICE_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_MEP_ROOM),
+					DxfFileConstants.COLOR_MEP_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_LAUNDRY_ROOM),
+					DxfFileConstants.COLOR_LAUNDRY_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_LIFT_LOBBY),
+					DxfFileConstants.COLOR_LIFT_LOBBY);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_GUARD_ROOM),
+					DxfFileConstants.COLOR_GUARD_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_ELECTRIC_CABIN_ROOM),
+					DxfFileConstants.COLOR_ELECTRIC_CABIN_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_SUB_STATION_ROOM),
+					DxfFileConstants.COLOR_SUB_STATION_ROOM);
+		} else {
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_STORE_ROOM),
+					DxfFileConstants.COLOR_STORE_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_CCTV_ROOM),
+					DxfFileConstants.COLOR_CCTV_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_SERVICE_ROOM),
+					DxfFileConstants.COLOR_SERVICE_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_MEP_ROOM),
+					DxfFileConstants.COLOR_MEP_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_LAUNDRY_ROOM),
+					DxfFileConstants.COLOR_LAUNDRY_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_LIFT_LOBBY),
+					DxfFileConstants.COLOR_LIFT_LOBBY);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_GUARD_ROOM),
+					DxfFileConstants.COLOR_GUARD_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_ELECTRIC_CABIN_ROOM),
+					DxfFileConstants.COLOR_ELECTRIC_CABIN_ROOM);
+			allowedRooms.put(heightOfRoomFeaturesColor.get(DxfFileConstants.COLOR_SUB_STATION_ROOM),
+					DxfFileConstants.COLOR_SUB_STATION_ROOM);
+		}
 
-                                } else {
-                                    details = new HashMap<>();
-                                    details.put(RULE_NO, RULE_46_6C);
-                                    details.put(DESCRIPTION, BASEMENT_DESCRIPTION_TWO);
-                                    details.put(REQUIRED, "Between 1.2 to 1.5");
-                                    details.put(PROVIDED, minLength.toString());
-                                    details.put(STATUS, Result.Not_Accepted.getResultVal());
-                                    scrutinyDetail.getDetail().add(details);
-                                }
-                            }
+		return allowedRooms;
+	}
 
-                            pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
-                        }
-                    }
-                }
-            }
-        }
-        return pl;
-    }
+	private BigDecimal totalAreaOfBasement(Block block) {
+		BigDecimal area = BigDecimal.ZERO;
 
-    @Override
-    public Map<String, Date> getAmendments() {
-        return new LinkedHashMap<>();
-    }
+		for (Floor floor : block.getBuilding().getFloors()) {
+			area = area.add(floor.getArea());
+		}
+
+		return area;
+	}
+
+	private int noOfBasement(Plan pl, Block block) {
+		int count = 0;
+		for (Floor floor : block.getBuilding().getFloors()) {
+			if (floor.getNumber() < 0)
+				count++;
+		}
+		return count;
+	}
+
+	@Override
+	public Plan process(Plan pl) {
+		validate(pl);
+		HashMap<String, String> errors = new HashMap<>();
+		OccupancyTypeHelper mostRestrictiveFarHelper = pl.getVirtualBuilding() != null
+				? pl.getVirtualBuilding().getMostRestrictiveFarHelper()
+				: null;
+		for (Block b : pl.getBlocks()) {
+
+			ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
+			scrutinyDetail.setKey("Block_" + b.getNumber() + "_" + "Basement");
+			scrutinyDetail.addColumnHeading(1, RULE_NO);
+			scrutinyDetail.addColumnHeading(2, DESCRIPTION);
+			scrutinyDetail.addColumnHeading(3, REQUIRED);
+			scrutinyDetail.addColumnHeading(4, PROVIDED);
+			scrutinyDetail.addColumnHeading(5, STATUS);
+
+			Map<String, String> details = new HashMap<>();
+			BigDecimal minLength = BigDecimal.ZERO;
+
+			if (b.getBuilding() != null && b.getBuilding().getFloors() != null
+					&& !b.getBuilding().getFloors().isEmpty()) {
+				for (Floor f : b.getBuilding().getFloors()) {
+
+					if (f != null && f.getNumber() == -1) {
+
+						// apply rule
+
+						if (f.getHeightFromTheFloorToCeiling() != null
+								&& !f.getHeightFromTheFloorToCeiling().isEmpty()) {
+
+							minLength = f.getHeightFromTheFloorToCeiling().stream().reduce(BigDecimal::min).get();
+
+							if (minLength.compareTo(BigDecimal.valueOf(2.5)) >= 0) {
+								details.put(RULE_NO, RULE_46_6A);
+								details.put(DESCRIPTION, BASEMENT_DESCRIPTION_ONE);
+								details.put(REQUIRED, ">= 2.5");
+								details.put(PROVIDED, minLength.toString());
+								details.put(STATUS, Result.Accepted.getResultVal());
+								scrutinyDetail.getDetail().add(details);
+
+							} else {
+								details = new HashMap<>();
+								details.put(RULE_NO, RULE_46_6A);
+								details.put(DESCRIPTION, BASEMENT_DESCRIPTION_ONE);
+								details.put(REQUIRED, ">= 2.5");
+								details.put(PROVIDED, minLength.toString());
+								details.put(STATUS, Result.Not_Accepted.getResultVal());
+								scrutinyDetail.getDetail().add(details);
+							}
+						}
+						minLength = BigDecimal.ZERO;
+						if (f.getHeightOfTheCeilingOfUpperBasement() != null
+								&& !f.getHeightOfTheCeilingOfUpperBasement().isEmpty()) {
+
+							minLength = f.getHeightOfTheCeilingOfUpperBasement().stream().reduce(BigDecimal::min).get();
+
+							BigDecimal minRequired = BigDecimal.ZERO;
+							BigDecimal maxRequired = new BigDecimal("1.5");
+
+							if (DxfFileConstants.OC_COMMERCIAL.equals(mostRestrictiveFarHelper.getType().getCode())
+									|| DxfFileConstants.MULTI_LEVEL_CAR_PARKING.equals(
+											mostRestrictiveFarHelper.getSubtype().getCode())
+									|| isGroundFloorStilt(b)) {
+								minRequired = new BigDecimal("0.3");
+							} else {
+								minRequired = new BigDecimal("0.9");
+							}
+
+							if (minLength.compareTo(minRequired) >= 0 && minLength.compareTo(maxRequired) <= 0) {
+								details = new HashMap<>();
+								details.put(RULE_NO, RULE_46_6C);
+								details.put(DESCRIPTION, BASEMENT_DESCRIPTION_TWO);
+								details.put(REQUIRED, "Between " + minRequired.toString() + " to 1.5");
+								details.put(PROVIDED, minLength.toString());
+								details.put(STATUS, Result.Accepted.getResultVal());
+								scrutinyDetail.getDetail().add(details);
+
+							} else {
+								details = new HashMap<>();
+								details.put(RULE_NO, RULE_46_6C);
+								details.put(DESCRIPTION, BASEMENT_DESCRIPTION_TWO);
+								details.put(REQUIRED, "Between " + minRequired.toString() + " to 1.5");
+								details.put(PROVIDED, minLength.toString());
+								details.put(STATUS, Result.Not_Accepted.getResultVal());
+								scrutinyDetail.getDetail().add(details);
+							}
+						}
+
+					}
+
+				}
+			}
+			pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
+		}
+
+		if (errors.size() > 0)
+			pl.addErrors(errors);
+
+		return pl;
+	}
+
+	private boolean isGroundFloorStilt(Block block) {
+		if (block.getBuilding() != null && block.getBuilding().getFloors() != null) {
+			for (Floor floor : block.getBuilding().getFloors()) {
+				if (floor.getNumber() == 0 && floor.isStiltFloor())
+					return true;
+
+			}
+		}
+		return false;
+	}
+
+//	private int allowedNoOfBesment(Plan pl,OccupancyTypeHelper occupancyTypeHelper) {
+//		BigDecimal plot=pl.getPlot().getArea();
+//	}
+
+	@Override
+	public Map<String, Date> getAmendments() {
+		return new LinkedHashMap<>();
+	}
 
 }

@@ -49,6 +49,9 @@ package org.egov.common.entity.edcr;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -70,6 +73,7 @@ public class PlanInformation implements Serializable {
     private String ownerName;
     //Temporary field used to auto populate occupancy detail.
     private String occupancy;
+    private String subOccupancy;
     //Temporary field used for service type.
     private String serviceType;
     //Temporary field used to show amenities used in application.
@@ -166,8 +170,100 @@ public class PlanInformation implements Serializable {
     private String district;
     //YES/NO/NA.Extracted from Plan info. Rain water declared in plan.
     private transient String rwhDeclared = NA;
-
-
+    //NUMBER_OF_OCCUPANTS_OR_USERS
+    private BigDecimal numberOfOccupantsOrUsers=BigDecimal.ZERO;
+    
+    private boolean assemblyBuilding;
+    
+    private boolean lowRiskBuilding;
+    
+    private String riskType;
+    
+    private String riskTypeDes;
+    
+    //IS_THE_PLOT_PART_OF_THE_LAYOUT_APPROVED_BY_THE_AUTHORITY_OR_DEVELOPED_AND_ALLOTTED_BY_THE_GOVERNMENT_OR_STATUTORY_BODIES_OR_IS_A_FINAL_PLOT_IN_TOWN_PLANNING_SCHEMES_OR_DEVELOPMENT_SCHEMES
+    private String approvedLayoutDeclaration=NA;
+    
+    //IS_BUILDING_UNDER_HAZARDOUS_OCCUPANCY_CATEGORY
+    private String buildingUnderHazardousOccupancyCategory=NA;
+    
+    //PER_ACRE_BENCHMARK_VALUE_OF_LAND_NEEDED_IF_PROJECT_IS_HAVING_PURCHASABLE_FAR_COMPONENT = number
+    private BigDecimal benchmarkValuePerAcre=BigDecimal.ZERO;
+    
+    private boolean shelterFeeRequired;
+    
+    private long totalNoOfDwellingUnits;
+    
+    //DOES_THE_PROJECT_REQUIRE_NOC_FROM_AAI_AS_PER_THE_COLOUR_CODED_ZONE_MAPS
+    private String nocFromAAI;
+    
+    //IS_THE_PROJECT_LOCATED_WITHIN_200_METERS_DISTANCE_OF_THE_CENTRALLY_PROTECTED_MONUMENT
+    private String isProjectNearOfCentrallyProtectedMonument;
+    
+    //IS_THE_PROJECT_LOCATED_WITHIN_200_METERS_DISTANCE_OF_THE_STATE_PROTECTED_MONUMENT
+    private String isProjectNearOfStateProtectedMonument;
+    
+    //IS_THE_PROJECT_LOCATED_WITHIN_200_METERS_FROM_STRATEGIC_BUILDINGS
+    private String ProjectNearOfStrategicBuildings;
+    
+    //IS_PROPOSED_CONSTRUCTION_NEXT_TO_FLOOD_EMBANKMENT_AND_DOES_APPLICANT_WANT_TO_HAVE_DIRECT_ACCESS_FROM_THE_EMBANKMENT_ROAD
+    private String isProposedConstructionNextToFloodEmbankment;
+    
+    //IS_KISAM_OF_LAND_RECORDED_AS_AGRICULTURE_IN_RECORD_OF_RIGHTS
+    private String isKisamOfLandRecordedAsAgricultureInRecordOfRights;
+    
+    //IS_THE_PROJECT_ADJACENT_TO_HIGHWAY_AND_HAVING_DIRECT_ACCESS_TO_IT
+    private String isTheProjectAdjacentToHighwayAndHavingDirectAccessToIt;
+    
+    //IS_THE_PROJECT_CLOSE_TO_THE_COASTAL_REGION
+    private String isTheProjectCloseToTheCoastalRegion;
+    
+    private List<String> requiredNOCs = new ArrayList<String>();
+    
+    private List<String> additionalDocuments =new ArrayList<String>();//2,4,7
+    
+    private int startRatingForHotel;
+    
+    private String doesHospitalHaveCriticalCareUnit;
+    
+    private boolean isSecurityDepositRequired;
+    
+    private BigDecimal offSiteParkingprovisionsArea=BigDecimal.ZERO;
+    
+    private String specialBuilding;
+    
+    private String buildingCentrallyAirConditioned;
+    
+    private String businessService; 
+    
+    private String wasteWaterDischargePerDay;
+    
+    private String floorInfo;
+    
+    private String isLandRegularized;
+    
+    private BigDecimal totalParking;
+    
+    private BigDecimal totalConnectedLoadOfTheProposedProjectInW;
+    
+    private BigDecimal minimumGenerationCapacityOfTheRooftopSolarPvSystemInW; 
+    
+    private BigDecimal capacityOfSolarWaterHeatingSystemInLpd;
+    
+    private Map<String, OccupancyPercentage> occupancyPercentages;
+    
+    private BigDecimal projectValueForEIDP;
+    
+    private String isProjectUndertakingByGovt;
+    
+    private String floorAreaInSquareMetresStoreyWise;
+    
+    private String buildingHeightExcludingMumty;
+    
+    private String buildingHeightIncludingMumty;
+    
+    private String numberOfStoreys;
+    
     public Boolean getGovernmentOrAidedSchool() {
         return governmentOrAidedSchool;
     }
@@ -624,4 +720,350 @@ public class PlanInformation implements Serializable {
         this.rwhDeclared = rwhDeclared;
     }
 
+	
+    public BigDecimal getNumberOfOccupantsOrUsers() {
+		return numberOfOccupantsOrUsers;
+	}
+
+	public void setNumberOfOccupantsOrUsers(BigDecimal numberOfOccupantsOrUsers) {
+		this.numberOfOccupantsOrUsers = numberOfOccupantsOrUsers;
+	}
+
+	
+	public boolean isAssemblyBuilding() {
+		return assemblyBuilding;
+	}
+
+	public void setAssemblyBuilding(boolean assemblyBuilding) {
+		this.assemblyBuilding = assemblyBuilding;
+	}
+
+	
+	public boolean isLowRiskBuilding() {
+		return lowRiskBuilding;
+	}
+
+	public void setLowRiskBuilding(boolean lowRiskBuilding) {
+		this.lowRiskBuilding = lowRiskBuilding;
+	}
+
+	public String getApprovedLayoutDeclaration() {
+		return approvedLayoutDeclaration;
+	}
+
+	public void setApprovedLayoutDeclaration(String approvedLayoutDeclaration) {
+		this.approvedLayoutDeclaration = approvedLayoutDeclaration;
+	}
+
+	public String getBuildingUnderHazardousOccupancyCategory() {
+		return buildingUnderHazardousOccupancyCategory;
+	}
+
+	public void setBuildingUnderHazardousOccupancyCategory(String buildingUnderHazardousOccupancyCategory) {
+		this.buildingUnderHazardousOccupancyCategory = buildingUnderHazardousOccupancyCategory;
+	}
+
+	public BigDecimal getBenchmarkValuePerAcre() {
+		return benchmarkValuePerAcre;
+	}
+
+	public void setBenchmarkValuePerAcre(BigDecimal benchmarkValuePerAcre) {
+		this.benchmarkValuePerAcre = benchmarkValuePerAcre;
+	}
+
+
+	public boolean isShelterFeeRequired() {
+		return shelterFeeRequired;
+	}
+
+	public void setShelterFeeRequired(boolean shelterFeeRequired) {
+		this.shelterFeeRequired = shelterFeeRequired;
+	}
+
+	public long getTotalNoOfDwellingUnits() {
+		return totalNoOfDwellingUnits;
+	}
+
+	public void setTotalNoOfDwellingUnits(long totalNoOfDwellingUnits) {
+		this.totalNoOfDwellingUnits = totalNoOfDwellingUnits;
+	}
+
+	public String getNocFromAAI() {
+		return nocFromAAI;
+	}
+
+	public void setNocFromAAI(String nocFromAAI) {
+		this.nocFromAAI = nocFromAAI;
+	}
+
+	public String getIsProjectNearOfCentrallyProtectedMonument() {
+		return isProjectNearOfCentrallyProtectedMonument;
+	}
+
+	public void setIsProjectNearOfCentrallyProtectedMonument(String isProjectNearOfCentrallyProtectedMonument) {
+		this.isProjectNearOfCentrallyProtectedMonument = isProjectNearOfCentrallyProtectedMonument;
+	}
+
+	public String getIsProjectNearOfStateProtectedMonument() {
+		return isProjectNearOfStateProtectedMonument;
+	}
+
+	public void setIsProjectNearOfStateProtectedMonument(String isProjectNearOfStateProtectedMonument) {
+		this.isProjectNearOfStateProtectedMonument = isProjectNearOfStateProtectedMonument;
+	}
+
+	public String getProjectNearOfStrategicBuildings() {
+		return ProjectNearOfStrategicBuildings;
+	}
+
+	public void setProjectNearOfStrategicBuildings(String projectNearOfStrategicBuildings) {
+		ProjectNearOfStrategicBuildings = projectNearOfStrategicBuildings;
+	}
+
+	public String getIsProposedConstructionNextToFloodEmbankment() {
+		return isProposedConstructionNextToFloodEmbankment;
+	}
+
+	public void setIsProposedConstructionNextToFloodEmbankment(String isProposedConstructionNextToFloodEmbankment) {
+		this.isProposedConstructionNextToFloodEmbankment = isProposedConstructionNextToFloodEmbankment;
+	}
+
+	public String getIsKisamOfLandRecordedAsAgricultureInRecordOfRights() {
+		return isKisamOfLandRecordedAsAgricultureInRecordOfRights;
+	}
+
+	public void setIsKisamOfLandRecordedAsAgricultureInRecordOfRights(
+			String isKisamOfLandRecordedAsAgricultureInRecordOfRights) {
+		this.isKisamOfLandRecordedAsAgricultureInRecordOfRights = isKisamOfLandRecordedAsAgricultureInRecordOfRights;
+	}
+
+	public String getIsTheProjectAdjacentToHighwayAndHavingDirectAccessToIt() {
+		return isTheProjectAdjacentToHighwayAndHavingDirectAccessToIt;
+	}
+
+	public void setIsTheProjectAdjacentToHighwayAndHavingDirectAccessToIt(
+			String isTheProjectAdjacentToHighwayAndHavingDirectAccessToIt) {
+		this.isTheProjectAdjacentToHighwayAndHavingDirectAccessToIt = isTheProjectAdjacentToHighwayAndHavingDirectAccessToIt;
+	}
+
+	public String getIsTheProjectCloseToTheCoastalRegion() {
+		return isTheProjectCloseToTheCoastalRegion;
+	}
+
+	public void setIsTheProjectCloseToTheCoastalRegion(String isTheProjectCloseToTheCoastalRegion) {
+		this.isTheProjectCloseToTheCoastalRegion = isTheProjectCloseToTheCoastalRegion;
+	}
+
+	public String getRiskType() {
+		return riskType;
+	}
+
+	public void setRiskType(String riskType) {
+		this.riskType = riskType;
+	}
+
+	public List<String> getRequiredNOCs() {
+		return requiredNOCs;
+	}
+
+	public void setRequiredNOCs(List<String> requiredNOCs) {
+		this.requiredNOCs = requiredNOCs;
+	}
+
+	public List<String> getAdditionalDocuments() {
+		return additionalDocuments;
+	}
+
+	public void setAdditionalDocuments(List<String> additionalDocuments) {
+		this.additionalDocuments = additionalDocuments;
+	}
+
+	public int getStartRatingForHotel() {
+		return startRatingForHotel;
+	}
+
+	public void setStartRatingForHotel(int startRatingForHotel) {
+		this.startRatingForHotel = startRatingForHotel;
+	}
+
+	public String getDoesHospitalHaveCriticalCareUnit() {
+		return doesHospitalHaveCriticalCareUnit;
+	}
+
+	public void setDoesHospitalHaveCriticalCareUnit(String doesHospitalHaveCriticalCareUnit) {
+		this.doesHospitalHaveCriticalCareUnit = doesHospitalHaveCriticalCareUnit;
+	}
+
+	public boolean isSecurityDepositRequired() {
+		return isSecurityDepositRequired;
+	}
+
+	public void setSecurityDepositRequired(boolean isSecurityDepositRequired) {
+		this.isSecurityDepositRequired = isSecurityDepositRequired;
+	}
+
+	public BigDecimal getOffSiteParkingprovisionsArea() {
+		return offSiteParkingprovisionsArea;
+	}
+
+	public void setOffSiteParkingprovisionsArea(BigDecimal offSiteParkingprovisionsArea) {
+		this.offSiteParkingprovisionsArea = offSiteParkingprovisionsArea;
+	}
+
+	public String getRiskTypeDes() {
+		return riskTypeDes;
+	}
+
+	public void setRiskTypeDes(String riskTypeDes) {
+		this.riskTypeDes = riskTypeDes;
+	}
+
+
+	public String getSpecialBuilding() {
+		return specialBuilding;
+	}
+
+	public void setSpecialBuilding(String specialBuilding) {
+		this.specialBuilding = specialBuilding;
+	}
+
+	public String getBuildingCentrallyAirConditioned() {
+		return buildingCentrallyAirConditioned;
+	}
+
+	public void setBuildingCentrallyAirConditioned(String buildingCentrallyAirConditioned) {
+		this.buildingCentrallyAirConditioned = buildingCentrallyAirConditioned;
+	}
+
+	public String getBusinessService() {
+		return businessService;
+	}
+
+	public void setBusinessService(String businessService) {
+		this.businessService = businessService;
+	}
+
+	public String getSubOccupancy() {
+		return subOccupancy;
+	}
+
+	public void setSubOccupancy(String subOccupancy) {
+		this.subOccupancy = subOccupancy;
+	}
+
+	public String getWasteWaterDischargePerDay() {
+		return wasteWaterDischargePerDay;
+	}
+
+	public void setWasteWaterDischargePerDay(String wasteWaterDischargePerDay) {
+		this.wasteWaterDischargePerDay = wasteWaterDischargePerDay;
+	}
+
+	public String getFloorInfo() {
+		return floorInfo;
+	}
+
+	public void setFloorInfo(String floorInfo) {
+		this.floorInfo = floorInfo;
+	}
+
+	public String getIsLandRegularized() {
+		return isLandRegularized;
+	}
+
+	public void setIsLandRegularized(String isLandRegularized) {
+		this.isLandRegularized = isLandRegularized;
+	}
+
+	public BigDecimal getTotalParking() {
+		return totalParking;
+	}
+
+	public void setTotalParking(BigDecimal totalParking) {
+		this.totalParking = totalParking;
+	}
+
+	public BigDecimal getTotalConnectedLoadOfTheProposedProjectInW() {
+		return totalConnectedLoadOfTheProposedProjectInW;
+	}
+
+	public void setTotalConnectedLoadOfTheProposedProjectInW(BigDecimal totalConnectedLoadOfTheProposedProjectInW) {
+		this.totalConnectedLoadOfTheProposedProjectInW = totalConnectedLoadOfTheProposedProjectInW;
+	}
+
+	public BigDecimal getMinimumGenerationCapacityOfTheRooftopSolarPvSystemInW() {
+		return minimumGenerationCapacityOfTheRooftopSolarPvSystemInW;
+	}
+
+	public void setMinimumGenerationCapacityOfTheRooftopSolarPvSystemInW(
+			BigDecimal minimumGenerationCapacityOfTheRooftopSolarPvSystemInW) {
+		this.minimumGenerationCapacityOfTheRooftopSolarPvSystemInW = minimumGenerationCapacityOfTheRooftopSolarPvSystemInW;
+	}
+
+	public BigDecimal getCapacityOfSolarWaterHeatingSystemInLpd() {
+		return capacityOfSolarWaterHeatingSystemInLpd;
+	}
+
+	public void setCapacityOfSolarWaterHeatingSystemInLpd(BigDecimal capacityOfSolarWaterHeatingSystemInLpd) {
+		this.capacityOfSolarWaterHeatingSystemInLpd = capacityOfSolarWaterHeatingSystemInLpd;
+	}
+
+	public Map<String, OccupancyPercentage> getOccupancyPercentages() {
+		return occupancyPercentages;
+	}
+
+	public void setOccupancyPercentages(Map<String, OccupancyPercentage> occupancyPercentages) {
+		this.occupancyPercentages = occupancyPercentages;
+	}
+
+	public BigDecimal getProjectValueForEIDP() {
+		return projectValueForEIDP;
+	}
+
+	public void setProjectValueForEIDP(BigDecimal projectValueForEIDP) {
+		this.projectValueForEIDP = projectValueForEIDP;
+	}
+
+	public String getIsProjectUndertakingByGovt() {
+		return isProjectUndertakingByGovt;
+	}
+
+	public void setIsProjectUndertakingByGovt(String isProjectUndertakingByGovt) {
+		this.isProjectUndertakingByGovt = isProjectUndertakingByGovt;
+	}
+
+	public String getFloorAreaInSquareMetresStoreyWise() {
+		return floorAreaInSquareMetresStoreyWise;
+	}
+
+	public void setFloorAreaInSquareMetresStoreyWise(String floorAreaInSquareMetresStoreyWise) {
+		this.floorAreaInSquareMetresStoreyWise = floorAreaInSquareMetresStoreyWise;
+	}
+
+	public String getBuildingHeightExcludingMumty() {
+		return buildingHeightExcludingMumty;
+	}
+
+	public void setBuildingHeightExcludingMumty(String buildingHeightExcludingMumty) {
+		this.buildingHeightExcludingMumty = buildingHeightExcludingMumty;
+	}
+
+	public String getBuildingHeightIncludingMumty() {
+		return buildingHeightIncludingMumty;
+	}
+
+	public void setBuildingHeightIncludingMumty(String buildingHeightIncludingMumty) {
+		this.buildingHeightIncludingMumty = buildingHeightIncludingMumty;
+	}
+
+	public String getNumberOfStoreys() {
+		return numberOfStoreys;
+	}
+
+	public void setNumberOfStoreys(String numberOfStoreys) {
+		this.numberOfStoreys = numberOfStoreys;
+	}
+	
+
+	
 }

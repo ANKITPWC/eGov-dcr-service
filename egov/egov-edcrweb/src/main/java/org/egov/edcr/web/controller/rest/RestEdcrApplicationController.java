@@ -74,6 +74,7 @@ import org.egov.edcr.service.EdcrRestService;
 import org.egov.edcr.service.EdcrValidator;
 import org.egov.edcr.service.OcComparisonService;
 import org.egov.edcr.service.PlanService;
+import org.egov.infra.config.core.ApplicationThreadLocals;
 import org.egov.infra.microservice.contract.RequestInfoWrapper;
 import org.egov.infra.microservice.contract.ResponseInfo;
 import org.egov.infra.microservice.models.RequestInfo;
@@ -243,6 +244,7 @@ public class RestEdcrApplicationController {
             String serviceType = edcr.getApplicationSubType();
             Map<String, List<Object>> masterData = new HashMap<>();
             Boolean mdmsEnabled = mdmsConfiguration.getMdmsEnabled();
+           // ApplicationThreadLocals.setTenantID(edcr.getTenantId());
             if (mdmsEnabled != null && mdmsEnabled) {
                 Object mdmsData = bpaMdmsUtil.mDMSCall(new RequestInfo(), edcr.getTenantId());
                 HashMap<String, String> data = new HashMap<>();
@@ -287,7 +289,9 @@ public class RestEdcrApplicationController {
             ErrorResponse error = new ErrorResponse(INCORRECT_REQUEST, e.getLocalizedMessage(),
                     HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-        }
+        }catch (Exception e) {
+			e.printStackTrace();
+		}
         return getSuccessResponse(Arrays.asList(edcrDetail), edcr.getRequestInfo());
     }
 

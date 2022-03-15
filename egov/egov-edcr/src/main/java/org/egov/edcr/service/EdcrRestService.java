@@ -104,6 +104,7 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -159,6 +160,9 @@ public class EdcrRestService {
 
     @Autowired
     private EnvironmentSettings environmentSettings;
+    
+    @Value("${download.url.support.flage}")
+    private boolean downloadUrlSupportFlage;
 
     public Session getCurrentSession() {
         return entityManager.unwrap(Session.class);
@@ -195,7 +199,7 @@ public class EdcrRestService {
 
         edcrApplication.setEdcrApplicationDetails(edcrApplicationDetails);
         edcrApplication.setDxfFile(file);
-
+       
         if (edcrRequest.getRequestInfo() != null && edcrRequest.getRequestInfo().getUserInfo() != null) {
             edcrApplication.setThirdPartyUserCode(isNotBlank(edcrRequest.getRequestInfo().getUserInfo().getUuid())
                     ? edcrRequest.getRequestInfo().getUserInfo().getUuid()
@@ -317,8 +321,9 @@ public class EdcrRestService {
                         planPdf.getConvertedPdf().getFileStoreId(),
                         ApplicationThreadLocals.getTenantID()));
                 planPdfs.add(planPdf.getLayer().concat(" - ").concat(downloadURL));
+                if(edcrDetail.getPlanDetail().getEdcrPdfDetails()!=null)
                 for (org.egov.common.entity.edcr.EdcrPdfDetail pdf : edcrDetail.getPlanDetail().getEdcrPdfDetails()) {
-                    if (planPdf.getLayer().equalsIgnoreCase(pdf.getLayer()))
+                    if (planPdf!=null && planPdf.getLayer().equalsIgnoreCase(pdf.getLayer()))
                         pdf.setDownloadURL(downloadURL);
                 }
             }
@@ -901,8 +906,14 @@ public class EdcrRestService {
     }
 
     public String getFileDownloadUrl(final String fileStoreId, final String tenantId) {
-        return String.format(FILE_DOWNLOAD_URL, ApplicationThreadLocals.getDomainURL()) + "?tenantId=" + tenantId
-                + "&fileStoreId=" + fileStoreId;
+//        return String.format(FILE_DOWNLOAD_URL, ApplicationThreadLocals.getDomainURL()) + "?tenantId=" + tenantId
+//                + "&fileStoreId=" + fileStoreId;
+    	 String dUrl=String.format(FILE_DOWNLOAD_URL, ApplicationThreadLocals.getDomainURL()) + "?tenantId=" + tenantId
+    			 + "&fileStoreId=" + fileStoreId;
+         if(downloadUrlSupportFlage) {
+      	   dUrl=dUrl.replace("http:", "https:");
+         }
+      	return dUrl;
     }
 
     public Date resetFromDateTimeStamp(final Date date) {

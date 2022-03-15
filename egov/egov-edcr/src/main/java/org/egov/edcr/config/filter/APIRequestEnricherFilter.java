@@ -62,27 +62,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class APIRequestEnricherFilter implements Filter {
 
-    private static final Logger LOG = Logger.getLogger(APIRequestEnricherFilter.class);
+	private static final Logger LOG = Logger.getLogger(APIRequestEnricherFilter.class);
 
-    @Autowired
-    private APIRequestEnricher apiRequestEnricher;
+	@Autowired
+	private APIRequestEnricher apiRequestEnricher;
 
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) {
-        try {
-            filterChain.doFilter(apiRequestEnricher.enrich(request), response);
-        } catch (IOException | ServletException e) {
-            LOG.error("Error while enrich API Request", e);
-        }
-    }
+	@Override
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) {
+		try {
+			filterChain.doFilter(apiRequestEnricher.enrich(request), response);
+		} catch (IOException | ServletException e) {
+			LOG.error("Error while enrich API Request", e);
+		}
+	}
 
-    @Override
-    public void init(final FilterConfig arg0) {
-        // Do nothing
-    }
+	@Override
+	public void init(final FilterConfig arg0) {
+		// Do nothing
+	}
 
-    @Override
-    public void destroy() {
-        // Do nothing
-    }
+	@Override
+	public void destroy() {
+		// Do nothing
+	}
 }

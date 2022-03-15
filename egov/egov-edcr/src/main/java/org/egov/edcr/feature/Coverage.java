@@ -47,36 +47,45 @@
 
 package org.egov.edcr.feature;
 
+import static org.egov.edcr.constants.DxfFileConstants.ENVIRONMENTALLY_SENSITIVE_ZONE;
+import static org.egov.edcr.constants.DxfFileConstants.OPEN_SPACE_USE_ZONE;
+
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.egov.common.entity.edcr.Block;
+import org.egov.common.entity.edcr.Floor;
 import org.egov.common.entity.edcr.Measurement;
 import org.egov.common.entity.edcr.OccupancyType;
+import org.egov.common.entity.edcr.OccupancyTypeHelper;
 import org.egov.common.entity.edcr.Plan;
 import org.egov.common.entity.edcr.Result;
 import org.egov.common.entity.edcr.ScrutinyDetail;
+import org.egov.edcr.constants.DxfFileConstants;
+import org.egov.edcr.od.OdishaUtill;
 import org.egov.edcr.utility.DcrConstants;
 import org.egov.infra.utils.StringUtils;
 import org.springframework.stereotype.Service;
 
 @Service
 public class Coverage extends FeatureProcess {
-    // private static final String OCCUPANCY2 = "OCCUPANCY";
+	// private static final String OCCUPANCY2 = "OCCUPANCY";
 
-    private static final Logger LOG = Logger.getLogger(Coverage.class);
+	private static final Logger LOG = Logger.getLogger(Coverage.class);
 
-    //private static final String RULE_NAME_KEY = "coverage.rulename";
-    private static final String RULE_DESCRIPTION_KEY = "coverage.description";
-    private static final String RULE_EXPECTED_KEY = "coverage.expected";
-    private static final String RULE_ACTUAL_KEY = "coverage.actual";
-   // private static final BigDecimal ThirtyFive = BigDecimal.valueOf(35);
-    private static final BigDecimal Forty = BigDecimal.valueOf(40);
+	// private static final String RULE_NAME_KEY = "coverage.rulename";
+	private static final String RULE_DESCRIPTION_KEY = "coverage.description";
+	private static final String RULE_EXPECTED_KEY = "coverage.expected";
+	private static final String RULE_ACTUAL_KEY = "coverage.actual";
+	// private static final BigDecimal ThirtyFive = BigDecimal.valueOf(35);
+	private static final BigDecimal Forty = BigDecimal.valueOf(40);
 	/*
 	 * private static final BigDecimal FortyFive = BigDecimal.valueOf(45); private
 	 * static final BigDecimal Sixty = BigDecimal.valueOf(60); private static final
@@ -85,225 +94,361 @@ public class Coverage extends FeatureProcess {
 	 * SeventyFive = BigDecimal.valueOf(75); private static final BigDecimal Eighty
 	 * = BigDecimal.valueOf(80);
 	 */
-    public static final String RULE_38 = "38";
-    private static final BigDecimal ROAD_WIDTH_TWELVE_POINTTWO = BigDecimal.valueOf(12.2);
-    private static final BigDecimal ROAD_WIDTH_THIRTY_POINTFIVE = BigDecimal.valueOf(30.5);
-    
-    @Override
-    public Plan validate(Plan pl) {
-        for (Block block : pl.getBlocks()) {
+	public static final String RULE_38 = "38";
+	private static final BigDecimal ROAD_WIDTH_TWELVE_POINTTWO = BigDecimal.valueOf(12.2);
+	private static final BigDecimal ROAD_WIDTH_THIRTY_POINTFIVE = BigDecimal.valueOf(30.5);
+
+	@Override
+	public Plan validate(Plan pl) {
+		List<Block> list=pl.getBlocks();
+		list.addAll(pl.getOuthouse());
+        for (Block block : list) {
             if (block.getCoverage().isEmpty()) {
                 pl.addError("coverageArea" + block.getNumber(), "Coverage Area for block " + block.getNumber() + " not Provided");
             }
         }
-        return pl;
-    }
+		return pl;
+	}
 
-    @Override
-    public Plan process(Plan pl) {
-        validate(pl);
-        BigDecimal totalCoverage = BigDecimal.ZERO;
-        BigDecimal totalCoverageArea = BigDecimal.ZERO;
+	@Override
+	public Plan process(Plan pl) {
+		init(pl);
+		validate(pl);
+		BigDecimal totalCoverage = BigDecimal.ZERO;
+		BigDecimal totalCoverageArea = BigDecimal.ZERO;
 
-        for (Block block : pl.getBlocks()) {
-            BigDecimal coverageAreaWithoutDeduction = BigDecimal.ZERO;
-            BigDecimal coverageDeductionArea = BigDecimal.ZERO;
+		totalCoverageArea = updatedAmmenityArea(pl);
+		List<Block> blocks=new ArrayList<>();
+		blocks.addAll(pl.getBlocks());
+		blocks.addAll(pl.getOuthouse());
+		for (Block block : pl.getBlocks()) {
+			BigDecimal coverageAreaWithoutDeduction = BigDecimal.ZERO;
+			BigDecimal coverageDeductionArea = BigDecimal.ZERO;
 
-            for (Measurement coverage : block.getCoverage()) {
-                coverageAreaWithoutDeduction = coverageAreaWithoutDeduction.add(coverage.getArea());
-            }
-            for (Measurement deduct : block.getCoverageDeductions()) {
-                coverageDeductionArea = coverageDeductionArea.add(deduct.getArea());
-            }
-            if (block.getBuilding() != null) {
-                block.getBuilding().setCoverageArea(coverageAreaWithoutDeduction.subtract(coverageDeductionArea));
-                BigDecimal coverage = BigDecimal.ZERO;
-                if (pl.getPlot().getArea().doubleValue() > 0)
-                    coverage = block.getBuilding().getCoverageArea().multiply(BigDecimal.valueOf(100)).divide(
-                            pl.getPlanInformation().getPlotArea(), DcrConstants.DECIMALDIGITS_MEASUREMENTS,
-                            DcrConstants.ROUNDMODE_MEASUREMENTS);
+			for (Measurement coverage : block.getCoverage()) {
+				coverageAreaWithoutDeduction = coverageAreaWithoutDeduction.add(coverage.getArea());
+			}
+			for (Measurement deduct : block.getCoverageDeductions()) {
+				coverageDeductionArea = coverageDeductionArea.add(deduct.getArea());
+			}
+			if (block.getBuilding() != null) {
+				block.getBuilding().setCoverageArea(coverageAreaWithoutDeduction.subtract(coverageDeductionArea));
+				BigDecimal coverage = BigDecimal.ZERO;
+				if (pl.getPlot().getArea().doubleValue() > 0)
+					coverage = block.getBuilding().getCoverageArea().multiply(BigDecimal.valueOf(100)).divide(
+							pl.getPlanInformation().getPlotArea(), DcrConstants.DECIMALDIGITS_MEASUREMENTS,
+							DcrConstants.ROUNDMODE_MEASUREMENTS);
 
-                block.getBuilding().setCoverage(coverage);
+				block.getBuilding().setCoverage(coverage);
 
-                totalCoverageArea = totalCoverageArea.add(block.getBuilding().getCoverageArea());
-                // totalCoverage =
-                // totalCoverage.add(block.getBuilding().getCoverage());
-            }
+				totalCoverageArea = totalCoverageArea.add(block.getBuilding().getCoverageArea());
+				// totalCoverage =
+				// totalCoverage.add(block.getBuilding().getCoverage());
+			}
 
-        }
+		}
 
-      //  pl.setCoverageArea(totalCoverageArea);
-        // use plotBoundaryArea
-        if (pl.getPlot() != null && pl.getPlot().getArea().doubleValue() > 0)
-            totalCoverage = totalCoverageArea.multiply(BigDecimal.valueOf(100)).divide(pl.getPlanInformation().getPlotArea(),
-                    DcrConstants.DECIMALDIGITS_MEASUREMENTS, DcrConstants.ROUNDMODE_MEASUREMENTS);
-        pl.setCoverage(totalCoverage);
-        if (pl.getVirtualBuilding() != null) {
-            pl.getVirtualBuilding().setTotalCoverageArea(totalCoverageArea);
-        }
+		// pl.setCoverageArea(totalCoverageArea);
+		// use plotBoundaryArea
+		if (pl.getPlot() != null && pl.getPlot().getArea().doubleValue() > 0)
+			totalCoverage = totalCoverageArea.multiply(BigDecimal.valueOf(100)).divide(
+					pl.getPlanInformation().getPlotArea(), DcrConstants.DECIMALDIGITS_MEASUREMENTS,
+					DcrConstants.ROUNDMODE_MEASUREMENTS);
+		pl.setCoverage(totalCoverage);
+		if (pl.getVirtualBuilding() != null) {
+			pl.getVirtualBuilding().setTotalCoverageArea(totalCoverageArea);
+		}
 
-       BigDecimal roadWidth = pl.getPlanInformation().getRoadWidth();
-       if(roadWidth != null && roadWidth.compareTo(ROAD_WIDTH_TWELVE_POINTTWO) >= 0
-				&& roadWidth.compareTo(ROAD_WIDTH_THIRTY_POINTFIVE) <= 0) {
-        processCoverage(pl, StringUtils.EMPTY, totalCoverage, Forty);
-       }
-		/*
-		 * // for weighted coverage if (pl.getPlot().getArea().doubleValue() >= 5000) {
-		 * BigDecimal provideCoverage = BigDecimal.ZERO; BigDecimal weightedArea =
-		 * BigDecimal.ZERO; BigDecimal weightedCoverage = BigDecimal.ZERO; weightedArea
-		 * = weightedArea.setScale(DECIMALDIGITS_MEASUREMENTS, ROUNDMODE_MEASUREMENTS);
-		 * weightedCoverage = weightedCoverage.setScale(DECIMALDIGITS_MEASUREMENTS,
-		 * ROUNDMODE_MEASUREMENTS); provideCoverage =
-		 * provideCoverage.setScale(DECIMALDIGITS_MEASUREMENTS, ROUNDMODE_MEASUREMENTS);
-		 * 
-		 * for (Occupancy occ : pl.getOccupancies()) { BigDecimal occupancyWiseCoverage
-		 * = occ.getBuiltUpArea().multiply(getPermissibleCoverage(occ.getType()));
-		 * weightedArea = weightedArea.add(occupancyWiseCoverage);
-		 * 
-		 * } if (pl.getVirtualBuilding().getTotalBuitUpArea().doubleValue() > 0)
-		 * weightedCoverage =
-		 * weightedArea.divide(pl.getVirtualBuilding().getTotalBuitUpArea(),
-		 * DECIMALDIGITS, ROUNDMODE_MEASUREMENTS); if
-		 * (pl.getPlot().getArea().doubleValue() > 0) provideCoverage =
-		 * pl.getCoverageArea() .divide(pl.getPlot().getPlotBndryArea(), DECIMALDIGITS,
-		 * ROUNDMODE_MEASUREMENTS) .multiply(BigDecimal.valueOf(100)); //
-		 * provideCoverage.setScale(2); processCoverage(pl, "-",
-		 * provideCoverage.setScale(2, ROUNDMODE_MEASUREMENTS),
-		 * weightedCoverage.setScale(2, ROUNDMODE_MEASUREMENTS)); }
-		 */ /*
-			 * else { boolean exemption = ProcessHelper.isSmallPlot(pl); if (!exemption) {
-			 * OccupancyType mostRestrictiveOccupancy = getMostRestrictiveCoverage(
-			 * pl.getVirtualBuilding().getOccupancies()); if (mostRestrictiveOccupancy !=
-			 * null) { switch (mostRestrictiveOccupancy) { case OCCUPANCY_B1: case
-			 * OCCUPANCY_B2: case OCCUPANCY_B3: processCoverage(pl,
-			 * mostRestrictiveOccupancy.getOccupancyTypeVal(), totalCoverage, ThirtyFive);
-			 * break; case OCCUPANCY_D: case OCCUPANCY_D1: case OCCUPANCY_I2:
-			 * processCoverage(pl, mostRestrictiveOccupancy.getOccupancyTypeVal(),
-			 * totalCoverage, Forty); break; case OCCUPANCY_I1: processCoverage(pl,
-			 * mostRestrictiveOccupancy.getOccupancyTypeVal(), totalCoverage, FortyFive);
-			 * break;
-			 * 
-			 * case OCCUPANCY_C: processCoverage(pl,
-			 * mostRestrictiveOccupancy.getOccupancyTypeVal(), totalCoverage, Sixty); break;
-			 * 
-			 * case OCCUPANCY_A1: case OCCUPANCY_A4: case OCCUPANCY_A2: case OCCUPANCY_G1:
-			 * processCoverage(pl, mostRestrictiveOccupancy.getOccupancyTypeVal(),
-			 * totalCoverage, SixtyFive); break; case OCCUPANCY_E: case OCCUPANCY_F: case
-			 * OCCUPANCY_F4: processCoverage(pl,
-			 * mostRestrictiveOccupancy.getOccupancyTypeVal(), totalCoverage, Seventy);
-			 * break;
-			 * 
-			 * case OCCUPANCY_G2: processCoverage(pl,
-			 * mostRestrictiveOccupancy.getOccupancyTypeVal(), totalCoverage, SeventyFive);
-			 * break; case OCCUPANCY_H: processCoverage(pl,
-			 * mostRestrictiveOccupancy.getOccupancyTypeVal(), totalCoverage, Eighty);
-			 * break; default: break; } } } }
-			 */
-        return pl;
-    }
+		BigDecimal roadWidth = pl.getPlanInformation().getRoadWidth();
 
-	/*
-	 * private BigDecimal getPermissibleCoverage(OccupancyType type) { switch (type)
-	 * { case OCCUPANCY_B1: case OCCUPANCY_B2: case OCCUPANCY_B3: return ThirtyFive;
-	 * 
-	 * case OCCUPANCY_D: case OCCUPANCY_D1: case OCCUPANCY_I2: return Forty;
-	 * 
-	 * case OCCUPANCY_I1: return FortyFive;
-	 * 
-	 * case OCCUPANCY_C: return Sixty;
-	 * 
-	 * case OCCUPANCY_A1: case OCCUPANCY_A4: case OCCUPANCY_A2: case OCCUPANCY_G1:
-	 * return SixtyFive;
-	 * 
-	 * case OCCUPANCY_E: case OCCUPANCY_F: case OCCUPANCY_F4: return Seventy;
-	 * 
-	 * case OCCUPANCY_G2: return SeventyFive;
-	 * 
-	 * case OCCUPANCY_H: return Eighty; default: return BigDecimal.ZERO; } }
-	 */
-    private void processCoverage(Plan pl, String occupancy, BigDecimal coverage, BigDecimal upperLimit) {
-        ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
-        scrutinyDetail.setKey("Common_Coverage");
-        scrutinyDetail.setHeading("Coverage in Percentage");
-        scrutinyDetail.addColumnHeading(1, RULE_NO);
-        scrutinyDetail.addColumnHeading(2, DESCRIPTION);
-        //scrutinyDetail.addColumnHeading(3, OCCUPANCY);
-        scrutinyDetail.addColumnHeading(4, PERMISSIBLE);
-        scrutinyDetail.addColumnHeading(5, PROVIDED);
-        scrutinyDetail.addColumnHeading(6, STATUS);
+		BigDecimal requiredCoverage = getPermissibleGroundCoverage(pl);
+		// if(requiredCoverage.compareTo(BigDecimal.ZERO)>0)
+		processCoverage(pl, StringUtils.EMPTY, totalCoverage, requiredCoverage);
+		
+		return pl;
+	}
 
-        String desc = getLocaleMessage(RULE_DESCRIPTION_KEY, upperLimit.toString());
-        String actualResult = getLocaleMessage(RULE_ACTUAL_KEY, coverage.toString());
-        String expectedResult = getLocaleMessage(RULE_EXPECTED_KEY, upperLimit.toString());
-        if (coverage.doubleValue() <= upperLimit.doubleValue()) {
-            Map<String, String> details = new HashMap<>();
-            details.put(RULE_NO, RULE_38);
-            details.put(DESCRIPTION, desc);
-           // details.put(OCCUPANCY, occupancy);
-            details.put(PERMISSIBLE, expectedResult);
-            details.put(PROVIDED, actualResult);
-            details.put(STATUS, Result.Accepted.getResultVal());
-            scrutinyDetail.getDetail().add(details);
-            pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
+	private BigDecimal updatedAmmenityArea(Plan pl) {
+		ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
+		scrutinyDetail.setKey("Common_Amenity in open space");
+		scrutinyDetail.addColumnHeading(1, RULE_NO);
+		scrutinyDetail.addColumnHeading(2, DESCRIPTION);
+		scrutinyDetail.addColumnHeading(3, REQUIRED);
+		scrutinyDetail.addColumnHeading(4, PROVIDED);
+		scrutinyDetail.addColumnHeading(5, STATUS);
+		BigDecimal totalArea = BigDecimal.ZERO;
+		String required="Ground Coverage Exemption till 10 sqm";
+		if (pl.getAmmenity().getGuardRooms().size() > 0) {
+			BigDecimal guardRoomArea = pl.getAmmenity().getGuardRooms().stream().map(m -> m.getArea())
+					.reduce(BigDecimal::add).get();
+			guardRoomArea=guardRoomArea.setScale(2,BigDecimal.ROUND_HALF_UP);
+			if (guardRoomArea.compareTo(new BigDecimal("10")) > 0)
+				totalArea = totalArea.add(guardRoomArea);
+			addDetails(scrutinyDetail, "55-1-a", "Guard room",required,
+					guardRoomArea.toString(), Result.Accepted.getResultVal());
+		}
+		if (pl.getAmmenity().getElectricCabins().size() > 0) {
+			BigDecimal electricCabinArea = pl.getAmmenity().getElectricCabins().stream().map(m -> m.getArea())
+					.reduce(BigDecimal::add).get();
+			electricCabinArea=electricCabinArea.setScale(2,BigDecimal.ROUND_HALF_UP);
+			if (electricCabinArea.compareTo(new BigDecimal("10")) > 0)
+				totalArea = totalArea.add(electricCabinArea);
+			addDetails(scrutinyDetail, "55-1-a", "Electric cabin", required,
+					electricCabinArea.toString(), Result.Accepted.getResultVal());
+		}
+		if (pl.getAmmenity().getSubStations().size() > 0) {
+			BigDecimal subStationArea = pl.getAmmenity().getSubStations().stream().map(m -> m.getArea())
+					.reduce(BigDecimal::add).get();
+			subStationArea=subStationArea.setScale(2,BigDecimal.ROUND_HALF_UP);
+			if (subStationArea.compareTo(new BigDecimal("10")) > 0)
+				totalArea = totalArea.add(subStationArea);
+			addDetails(scrutinyDetail, "55-1-a", "Sub-Station", required,
+					subStationArea.toString(), Result.Accepted.getResultVal());
+		}
+		if (pl.getAmmenity().getAreaForGeneratorSet().size() > 0) {
+			BigDecimal AreaForGeneratorSetArea = pl.getAmmenity().getAreaForGeneratorSet().stream()
+					.map(m -> m.getArea()).reduce(BigDecimal::add).get();
+			AreaForGeneratorSetArea=AreaForGeneratorSetArea.setScale(2,BigDecimal.ROUND_HALF_UP);
+			if (AreaForGeneratorSetArea.compareTo(new BigDecimal("10")) > 0)
+				totalArea = totalArea.add(AreaForGeneratorSetArea);
+			addDetails(scrutinyDetail, "55-1-a", "Area for generator set", required,
+					AreaForGeneratorSetArea.toString(), Result.Accepted.getResultVal());
+		}
+		if (pl.getAmmenity().getAtms().size() > 0) {
+			BigDecimal atmArea = pl.getAmmenity().getAtms().stream().map(m -> m.getArea()).reduce(BigDecimal::add)
+					.get();
+			atmArea=atmArea.setScale(2,BigDecimal.ROUND_HALF_UP);
+			if (atmArea.compareTo(new BigDecimal("10")) > 0)
+				totalArea = totalArea.add(atmArea);
+			addDetails(scrutinyDetail, "55-1-a", "ATM", required,
+					atmArea.toString(), Result.Accepted.getResultVal());
+		}
+		if (pl.getAmmenity().getOtherAmmenities().size() > 0) {
+			BigDecimal otherAmmenitieArea = pl.getAmmenity().getOtherAmmenities().stream().map(m -> m.getArea())
+					.reduce(BigDecimal::add).get();
+			otherAmmenitieArea=otherAmmenitieArea.setScale(2,BigDecimal.ROUND_HALF_UP);
+			if (otherAmmenitieArea.compareTo(new BigDecimal("10")) > 0)
+				totalArea = totalArea.add(otherAmmenitieArea);
+			addDetails(scrutinyDetail, "55-1-a", "Other Ammenities", required,
+					otherAmmenitieArea.toString(), Result.Accepted.getResultVal());
+		}
+		pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
+		return totalArea;
+	}
 
-        } else {
-            Map<String, String> details = new HashMap<>();
-            details.put(RULE_NO, RULE_38);
-            details.put(DESCRIPTION, desc);
-           // details.put(OCCUPANCY, occupancy);
-            details.put(PERMISSIBLE, expectedResult);
-            details.put(PROVIDED, actualResult);
-            details.put(STATUS, Result.Not_Accepted.getResultVal());
-            scrutinyDetail.getDetail().add(details);
-            pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
+	private void addDetails(ScrutinyDetail scrutinyDetail, String rule, String description, String required,
+			String provided, String status) {
+		Map<String, String> details = new HashMap<>();
+		details.put(RULE_NO, rule);
+		details.put(DESCRIPTION, description);
+		details.put(REQUIRED, required);
+		details.put(PROVIDED, provided);
+		details.put(STATUS, status);
+		scrutinyDetail.getDetail().add(details);
+	}
+	
+	private void processCoverage(Plan pl, String occupancy, BigDecimal coverage, BigDecimal upperLimit) {
+		ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
+		scrutinyDetail.setKey("Common_Coverage");
+		scrutinyDetail.setHeading("Coverage in Percentage");
+		scrutinyDetail.addColumnHeading(1, RULE_NO);
+		scrutinyDetail.addColumnHeading(2, DESCRIPTION);
+		// scrutinyDetail.addColumnHeading(3, OCCUPANCY);
+		scrutinyDetail.addColumnHeading(3, PERMISSIBLE);
+		scrutinyDetail.addColumnHeading(4, PROVIDED);
+		scrutinyDetail.addColumnHeading(5, STATUS);
 
-        }
+		String desc = getLocaleMessage(RULE_DESCRIPTION_KEY, upperLimit.toString());
+		String actualResult = getLocaleMessage(RULE_ACTUAL_KEY, coverage.toString());
+		String expectedResult = getLocaleMessage(RULE_EXPECTED_KEY, upperLimit.toString());
 
-    }
+		Map<String, String> details = new HashMap<>();
+		details.put(RULE_NO, RULE_38);
+		details.put(DESCRIPTION, "Coverage");
 
-    protected OccupancyType getMostRestrictiveCoverage(EnumSet<OccupancyType> distinctOccupancyTypes) {
+		details.put(PROVIDED, coverage.toString());
+		if (upperLimit.compareTo(BigDecimal.ZERO) > 0) {
+			details.put(PERMISSIBLE, upperLimit.toString());
+			if (coverage.doubleValue() <= upperLimit.doubleValue()) {
+				details.put(STATUS, Result.Accepted.getResultVal());
+			} else {
+				details.put(STATUS, Result.Not_Accepted.getResultVal());
+			}
 
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_B1))
-            return OccupancyType.OCCUPANCY_B1;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_B2))
-            return OccupancyType.OCCUPANCY_B2;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_B3))
-            return OccupancyType.OCCUPANCY_B3;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_D))
-            return OccupancyType.OCCUPANCY_D;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_D1))
-            return OccupancyType.OCCUPANCY_D1;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_I2))
-            return OccupancyType.OCCUPANCY_I2;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_I1))
-            return OccupancyType.OCCUPANCY_I1;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_C))
-            return OccupancyType.OCCUPANCY_C;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_A1))
-            return OccupancyType.OCCUPANCY_A1;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_A4))
-            return OccupancyType.OCCUPANCY_A4;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_A2))
-            return OccupancyType.OCCUPANCY_A2;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_G1))
-            return OccupancyType.OCCUPANCY_G1;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_E))
-            return OccupancyType.OCCUPANCY_E;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_F))
-            return OccupancyType.OCCUPANCY_F;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_F4))
-            return OccupancyType.OCCUPANCY_F4;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_G2))
-            return OccupancyType.OCCUPANCY_G2;
-        if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_H))
-            return OccupancyType.OCCUPANCY_H;
+		} else {
+			details.put(PERMISSIBLE, DxfFileConstants.NA);
+			details.put(STATUS, Result.Accepted.getResultVal());
+		}
 
-        else
-            return null;
-    }
+		scrutinyDetail.getDetail().add(details);
+		pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
 
-    @Override
-    public Map<String, Date> getAmendments() {
-        return new LinkedHashMap<>();
-    }
+	}
+
+	protected OccupancyType getMostRestrictiveCoverage(EnumSet<OccupancyType> distinctOccupancyTypes) {
+
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_B1))
+			return OccupancyType.OCCUPANCY_B1;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_B2))
+			return OccupancyType.OCCUPANCY_B2;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_B3))
+			return OccupancyType.OCCUPANCY_B3;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_D))
+			return OccupancyType.OCCUPANCY_D;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_D1))
+			return OccupancyType.OCCUPANCY_D1;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_I2))
+			return OccupancyType.OCCUPANCY_I2;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_I1))
+			return OccupancyType.OCCUPANCY_I1;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_C))
+			return OccupancyType.OCCUPANCY_C;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_A1))
+			return OccupancyType.OCCUPANCY_A1;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_A4))
+			return OccupancyType.OCCUPANCY_A4;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_A2))
+			return OccupancyType.OCCUPANCY_A2;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_G1))
+			return OccupancyType.OCCUPANCY_G1;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_E))
+			return OccupancyType.OCCUPANCY_E;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_F))
+			return OccupancyType.OCCUPANCY_F;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_F4))
+			return OccupancyType.OCCUPANCY_F4;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_G2))
+			return OccupancyType.OCCUPANCY_G2;
+		if (distinctOccupancyTypes.contains(OccupancyType.OCCUPANCY_H))
+			return OccupancyType.OCCUPANCY_H;
+
+		else
+			return null;
+	}
+
+	private BigDecimal getPermissibleGroundCoverage(Plan pl) {
+
+		if (checkLowRiskBuildingCriteria(pl))
+			return BigDecimal.ZERO;
+
+		BigDecimal maxPermissibleGroundCoverage = BigDecimal.ZERO;
+		switch (pl.getPlanInformation().getLandUseZone()) {
+		case OPEN_SPACE_USE_ZONE:
+			if (getPublicOpenSpace(pl).compareTo(new BigDecimal("40")) < 0)
+				maxPermissibleGroundCoverage = new BigDecimal("30");
+			break;
+		case ENVIRONMENTALLY_SENSITIVE_ZONE:
+			maxPermissibleGroundCoverage = new BigDecimal("40");
+			break;
+		}
+
+		if (maxPermissibleGroundCoverage.compareTo(BigDecimal.ZERO) > 0)
+			return maxPermissibleGroundCoverage;
+
+		// General Criteria
+		OccupancyTypeHelper occupancyTypeHelper = pl.getVirtualBuilding().getMostRestrictiveFarHelper();
+		System.out.println(occupancyTypeHelper);
+		System.out.println(occupancyTypeHelper + " - " + occupancyTypeHelper.getSubtype());
+		System.out.println(occupancyTypeHelper + " - " + occupancyTypeHelper.getSubtype() + " - "
+				+ occupancyTypeHelper.getSubtype().getCode());
+		if (DxfFileConstants.PETROL_PUMP_ONLY_FILLING_STATION.equals(occupancyTypeHelper.getSubtype().getCode())
+				|| DxfFileConstants.PETROL_PUMP_FILLING_STATION_AND_SERVICE_STATION
+						.equals(occupancyTypeHelper.getSubtype().getCode())
+				|| DxfFileConstants.CNG_MOTHER_STATION.equals(occupancyTypeHelper.getSubtype().getCode()))
+			maxPermissibleGroundCoverage = new BigDecimal("20");
+		else if (DxfFileConstants.FARM_HOUSE.equals(occupancyTypeHelper.getSubtype().getCode())
+				|| DxfFileConstants.COUNTRY_HOMES.equals(occupancyTypeHelper.getSubtype().getCode()))
+			maxPermissibleGroundCoverage = new BigDecimal("15");
+		else
+			maxPermissibleGroundCoverage = getGeneralCriteria(pl);
+
+		return maxPermissibleGroundCoverage;
+	}
+
+	private BigDecimal getGeneralCriteria(Plan pl) {
+		BigDecimal buildingHeight = OdishaUtill.getMaxBuildingHeight(pl);
+		;
+		BigDecimal maxPermissibleGroundCoverage = BigDecimal.ZERO;
+		if (buildingHeight.compareTo(new BigDecimal("15")) < 0)
+			maxPermissibleGroundCoverage = BigDecimal.ZERO;
+		else if (buildingHeight.compareTo(new BigDecimal("15")) >= 0
+				&& buildingHeight.compareTo(new BigDecimal("18")) < 0)
+			maxPermissibleGroundCoverage = new BigDecimal("50");
+		else if (buildingHeight.compareTo(new BigDecimal("18")) >= 0
+				&& buildingHeight.compareTo(new BigDecimal("40")) <= 0)
+			maxPermissibleGroundCoverage = new BigDecimal("40");
+		else
+			maxPermissibleGroundCoverage = new BigDecimal("40");
+		return maxPermissibleGroundCoverage;
+	}
+
+	private BigDecimal getPublicOpenSpace(Plan pl) {
+		BigDecimal totalPublicOpenSace = BigDecimal.ZERO;
+		BigDecimal inPercentage = BigDecimal.ZERO;
+		for (Block block : pl.getBlocks()) {
+			for (Measurement measurement : block.getPlantationGreenStripes()) {
+				totalPublicOpenSace = totalPublicOpenSace.add(measurement.getArea());
+			}
+		}
+		inPercentage = totalPublicOpenSace.divide(pl.getPlot().getArea()).multiply(new BigDecimal("100"));
+		return inPercentage;
+	}
+
+	private static void init(Plan pl) {
+		OdishaUtill.updateDUnitInPlan(pl);
+		OdishaUtill.updateAmmenity(pl);
+		OdishaUtill.updateBlock(pl);
+		OdishaUtill.setPlanInfoBlkWise(pl, DxfFileConstants.NUMBER_OF_OCCUPANTS_OR_USERS_OR_BED_BLK);
+	}
+
+	private boolean checkLowRiskBuildingCriteria(Plan pl) {
+		OccupancyTypeHelper occupancyTypeHelper = pl.getVirtualBuilding().getMostRestrictiveFarHelper();
+		boolean isLowRiskBuilding = false;
+		if (DxfFileConstants.OC_RESIDENTIAL.equals(occupancyTypeHelper.getType().getCode())) {
+
+			if (pl.getPlot().getArea().compareTo(new BigDecimal("500")) <= 0
+					&& DxfFileConstants.YES.equalsIgnoreCase(pl.getPlanInformation().getApprovedLayoutDeclaration())) {
+				if (!checkIsBeasment(pl) && OdishaUtill.getMaxBuildingHeight(pl).compareTo(new BigDecimal("10")) <= 0) {
+					isLowRiskBuilding = true;
+				}
+			}
+		}
+		pl.getPlanInformation().setLowRiskBuilding(isLowRiskBuilding);
+
+		if (isLowRiskBuilding) {
+			pl.getPlanInformation().setRiskType(DxfFileConstants.LOW);
+			pl.getPlanInformation().setRiskTypeDes(DxfFileConstants.LOW);
+		} else {
+			pl.getPlanInformation().setRiskType(DxfFileConstants.HIGH);
+			pl.getPlanInformation().setRiskTypeDes(DxfFileConstants.OTHER_THAN_LOW);
+		}
+
+		return isLowRiskBuilding;
+	}
+
+	private boolean checkIsBeasment(Plan pl) {
+		boolean flage = false;
+		if (pl.getBlocks() != null) {
+			for (Block b : pl.getBlocks()) {
+				if (b.getBuilding() != null && b.getBuilding().getFloors() != null
+						&& !b.getBuilding().getFloors().isEmpty()) {
+					for (Floor f : b.getBuilding().getFloors()) {
+						if (f.getNumber() == -1) {
+							flage = true;
+							break;
+						}
+
+					}
+				}
+				if (flage)
+					break;
+			}
+		}
+		return flage;
+	}
+
+	@Override
+	public Map<String, Date> getAmendments() {
+		return new LinkedHashMap<>();
+	}
 }

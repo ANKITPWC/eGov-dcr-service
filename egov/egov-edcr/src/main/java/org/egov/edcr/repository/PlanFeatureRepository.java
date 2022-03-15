@@ -67,6 +67,7 @@ import org.egov.edcr.feature.ConstructedArea;
 import org.egov.edcr.feature.Coverage;
 import org.egov.edcr.feature.DepthCuttingService;
 import org.egov.edcr.feature.DistanceToRoad;
+import org.egov.edcr.feature.DoorWays;
 import org.egov.edcr.feature.DrinageService;
 import org.egov.edcr.feature.DxfToPdfConverter;
 import org.egov.edcr.feature.ExitWidth;
@@ -81,6 +82,7 @@ import org.egov.edcr.feature.GovtBuildingDistance;
 import org.egov.edcr.feature.GuardRoom;
 import org.egov.edcr.feature.HeadRoom;
 import org.egov.edcr.feature.HeightOfRoom;
+import org.egov.edcr.feature.Helipad;
 import org.egov.edcr.feature.InfoCommsTechService;
 import org.egov.edcr.feature.InteriorOpenSpaceService;
 import org.egov.edcr.feature.Kitchen;
@@ -92,16 +94,20 @@ import org.egov.edcr.feature.MezzanineFloorService;
 import org.egov.edcr.feature.MonumentDistance;
 import org.egov.edcr.feature.NorthDirection;
 import org.egov.edcr.feature.OpenStairService;
+import org.egov.edcr.feature.OutHouseService;
 import org.egov.edcr.feature.OverHangs;
 import org.egov.edcr.feature.OverheadElectricalLineService;
 import org.egov.edcr.feature.Parapet;
 import org.egov.edcr.feature.Parking;
+import org.egov.edcr.feature.PassageService;
 import org.egov.edcr.feature.PetrolFillingStation;
 import org.egov.edcr.feature.PlanInfoFeature;
 import org.egov.edcr.feature.Plantation;
 import org.egov.edcr.feature.PlantationGreenStrip;
 import org.egov.edcr.feature.PlotArea;
 import org.egov.edcr.feature.PorticoService;
+import org.egov.edcr.feature.ProvisionService;
+import org.egov.edcr.feature.PublicWashroomService;
 import org.egov.edcr.feature.RainWaterHarvesting;
 import org.egov.edcr.feature.RampService;
 import org.egov.edcr.feature.RecreationalSpace;
@@ -371,6 +377,15 @@ public class PlanFeatureRepository {
         pf = new PlanFeature(SupplyLineUtility.class);
         features.add(pf);
         
+        pf = new PlanFeature(PassageService.class);
+        features.add(pf);
+        
+        pf = new PlanFeature(Helipad.class);
+        features.add(pf);
+        
+        pf = new PlanFeature(DoorWays.class);
+        features.add(pf);
+        
         pf = new PlanFeature(GlassFacadeOpening.class);
         features.add(pf);
 
@@ -378,6 +393,15 @@ public class PlanFeatureRepository {
         features.add(pf);
         
         pf = new PlanFeature(InfoCommsTechService.class);
+        features.add(pf);
+        
+        pf = new PlanFeature(OutHouseService.class);
+        features.add(pf);
+        
+        pf = new PlanFeature(PublicWashroomService.class);
+        features.add(pf);
+        
+        pf = new PlanFeature(ProvisionService.class);
         features.add(pf);
         
         pf = new PlanFeature(DxfToPdfConverter.class);

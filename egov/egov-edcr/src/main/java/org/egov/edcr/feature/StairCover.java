@@ -58,66 +58,70 @@ import org.egov.common.entity.edcr.Block;
 import org.egov.common.entity.edcr.Plan;
 import org.egov.common.entity.edcr.Result;
 import org.egov.common.entity.edcr.ScrutinyDetail;
+import org.egov.edcr.constants.DxfFileConstants;
+import org.kabeja.dxf.DXFConstants;
 import org.springframework.stereotype.Service;
 
 @Service
 public class StairCover extends FeatureProcess {
 
-    private static final Logger LOG = Logger.getLogger(StairCover.class);
-    private static final String RULE_44_C = "44-c";
-    public static final String STAIRCOVER_DESCRIPTION = "Mumty";
+	private static final Logger LOG = Logger.getLogger(StairCover.class);
+	private static final String RULE_44_C = "44-c";
+	public static final String STAIRCOVER_DESCRIPTION = "Mumty Height";
 
-    @Override
-    public Plan validate(Plan pl) {
+	@Override
+	public Plan validate(Plan pl) {
 
-        return pl;
-    }
+		return pl;
+	}
 
-    @Override
-    public Plan process(Plan pl) {
+	@Override
+	public Plan process(Plan pl) {
 
-        ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
-        scrutinyDetail.setKey("Common_Mumty");
-        scrutinyDetail.addColumnHeading(1, RULE_NO);
-        scrutinyDetail.addColumnHeading(2, DESCRIPTION);
-        scrutinyDetail.addColumnHeading(3, VERIFIED);
-        scrutinyDetail.addColumnHeading(4, ACTION);
-        scrutinyDetail.addColumnHeading(5, STATUS);
+		
 
-        Map<String, String> details = new HashMap<>();
-        details.put(RULE_NO, RULE_44_C);
+		BigDecimal minHeight = BigDecimal.ZERO;
 
-        BigDecimal minHeight = BigDecimal.ZERO;
+		for (Block b : pl.getBlocks()) {
+			ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
+			//scrutinyDetail.setKey("Common_Mumty");
+			scrutinyDetail.setKey("Block_" + b.getNumber() + "_" + "Mumty");
+			scrutinyDetail.addColumnHeading(1, RULE_NO);
+			scrutinyDetail.addColumnHeading(2, DESCRIPTION);
+			scrutinyDetail.addColumnHeading(3, REQUIRED);
+			scrutinyDetail.addColumnHeading(4, PROVIDED);
+			scrutinyDetail.addColumnHeading(5, STATUS);
 
-        for (Block b : pl.getBlocks()) {
-            minHeight = BigDecimal.ZERO;
-            if (b.getStairCovers() != null && !b.getStairCovers().isEmpty()) {
-                minHeight = b.getStairCovers().stream().reduce(BigDecimal::min).get();
+			Map<String, String> details = new HashMap<>();
+			details.put(RULE_NO, RULE_44_C);
+			minHeight = BigDecimal.ZERO;
+			if (b.getStairCovers() != null && !b.getStairCovers().isEmpty()) {
+				minHeight = b.getStairCovers().stream().reduce(BigDecimal::min).get();
 
-                if (minHeight.compareTo(new BigDecimal(3)) <= 0) {
-                    details.put(DESCRIPTION, STAIRCOVER_DESCRIPTION);
-                    details.put(VERIFIED, "Verified whether stair cover height is <= 3 meters");
-                    details.put(ACTION, "Not included stair cover height(" + minHeight + ") to building height");
-                    details.put(STATUS, Result.Accepted.getResultVal());
-                    scrutinyDetail.getDetail().add(details);
-                    pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
-                } else {
-                    details.put(DESCRIPTION, STAIRCOVER_DESCRIPTION);
-                    details.put(VERIFIED, "Verified whether stair cover height is <= 3 meters");
-                    details.put(ACTION, "Included stair cover height(" + minHeight + ") to building height");
-                    details.put(STATUS, Result.Verify.getResultVal());
-                    scrutinyDetail.getDetail().add(details);
-                    pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
-                }
-            }
+				if (minHeight.compareTo(new BigDecimal(3)) <= 0) {
+					details.put(DESCRIPTION, STAIRCOVER_DESCRIPTION);
+					details.put(REQUIRED, DxfFileConstants.NA);
+					details.put(PROVIDED,  minHeight.toString() );
+					details.put(STATUS, Result.Accepted.getResultVal());
+					scrutinyDetail.getDetail().add(details);
+					pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
+				} else {
+					details.put(DESCRIPTION, STAIRCOVER_DESCRIPTION);
+					details.put(REQUIRED, DxfFileConstants.NA);
+					details.put(PROVIDED,  minHeight.toString() );
+					details.put(STATUS, Result.Accepted.getResultVal());
+					scrutinyDetail.getDetail().add(details);
+					pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
+				}
+			}
 
-        }
-        return pl;
-    }
+		}
+		return pl;
+	}
 
-    @Override
-    public Map<String, Date> getAmendments() {
-        return new LinkedHashMap<>();
-    }
+	@Override
+	public Map<String, Date> getAmendments() {
+		return new LinkedHashMap<>();
+	}
 
 }

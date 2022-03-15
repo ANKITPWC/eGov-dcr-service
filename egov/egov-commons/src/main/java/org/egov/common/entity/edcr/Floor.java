@@ -94,12 +94,38 @@ public class Floor extends Measurement {
     private MeasurementWithHeight lightAndVentilation = new MeasurementWithHeight();
     private List<RoofArea> roofAreas = new ArrayList<>();
 
-    private List<Balcony> balconies = new ArrayList<>();
+	private List<Balcony> balconies = new ArrayList<>();
 
-    private List<Measurement> overHangs;
+	private List<Measurement> overHangs;
 
-    private List<Measurement> constructedAreas = new ArrayList<>();
+	private List<Measurement> constructedAreas = new ArrayList<>();
 
+	private boolean isStiltFloor = false;
+
+	private BigDecimal totalStiltArea=BigDecimal.ZERO;
+
+	private BigDecimal StiltFloorHeight=BigDecimal.ZERO;
+	
+	private Boolean isServiceFloor = false;
+
+	private BigDecimal totalServiceArea=BigDecimal.ZERO;
+
+	private BigDecimal ServiceFloorHeight=BigDecimal.ZERO;
+	
+	private List<FloorUnit> ewsUnit;
+
+	private List<FloorUnit> ligUnit;
+
+	private List<FloorUnit> mig1Unit;
+
+	private List<FloorUnit> mig2Unit;
+
+	private List<FloorUnit> othersUnit;
+
+	private List<FloorUnit> roomUnit;
+	
+	private List<FloorUnit> ownersSocietyOffice;
+    
     private List<GlassFacadeOpening> glassFacadeOpenings = new ArrayList<>();
     // Doors for version 1.1.1
     private List<Door> doors = new ArrayList<>();
@@ -620,4 +646,110 @@ public class Floor extends Measurement {
         this.heightFromFloorToBottomOfBeam = heightFromFloorToBottomOfBeam;
     }
 
+	public boolean isStiltFloor() {
+		return isStiltFloor;
+	}
+
+	public void setStiltFloor(boolean isStiltFloor) {
+		this.isStiltFloor = isStiltFloor;
+	}
+
+	public BigDecimal getTotalStiltArea() {
+		return totalStiltArea;
+	}
+
+	public void setTotalStiltArea(BigDecimal totalStiltArea) {
+		this.totalStiltArea = totalStiltArea;
+	}
+
+	public BigDecimal getStiltFloorHeight() {
+		return StiltFloorHeight;
+	}
+
+	public void setStiltFloorHeight(BigDecimal stiltFloorHeight) {
+		StiltFloorHeight = stiltFloorHeight;
+	}
+
+	public Boolean getIsServiceFloor() {
+		return isServiceFloor;
+	}
+
+	public void setIsServiceFloor(Boolean isServiceFloor) {
+		this.isServiceFloor = isServiceFloor;
+	}
+
+	public BigDecimal getTotalServiceArea() {
+		return totalServiceArea;
+	}
+
+	public void setTotalServiceArea(BigDecimal totalServiceArea) {
+		this.totalServiceArea = totalServiceArea;
+	}
+
+	public BigDecimal getServiceFloorHeight() {
+		return ServiceFloorHeight;
+	}
+
+	public void setServiceFloorHeight(BigDecimal serviceFloorHeight) {
+		ServiceFloorHeight = serviceFloorHeight;
+	}
+
+	public List<FloorUnit> getEwsUnit() {
+		return ewsUnit;
+	}
+
+	public void setEwsUnit(List<FloorUnit> ewsUnit) {
+		this.ewsUnit = ewsUnit;
+	}
+
+	public List<FloorUnit> getLigUnit() {
+		return ligUnit;
+	}
+
+	public void setLigUnit(List<FloorUnit> ligUnit) {
+		this.ligUnit = ligUnit;
+	}
+
+	public List<FloorUnit> getMig1Unit() {
+		return mig1Unit;
+	}
+
+	public void setMig1Unit(List<FloorUnit> mig1Unit) {
+		this.mig1Unit = mig1Unit;
+	}
+
+	public List<FloorUnit> getMig2Unit() {
+		return mig2Unit;
+	}
+
+	public void setMig2Unit(List<FloorUnit> mig2Unit) {
+		this.mig2Unit = mig2Unit;
+	}
+
+	public List<FloorUnit> getOthersUnit() {
+		return othersUnit;
+	}
+
+	public void setOthersUnit(List<FloorUnit> othersUnit) {
+		this.othersUnit = othersUnit;
+	}
+
+	public List<FloorUnit> getRoomUnit() {
+		return roomUnit;
+	}
+
+	public void setRoomUnit(List<FloorUnit> roomUnit) {
+		this.roomUnit = roomUnit;
+	}
+
+	public List<FloorUnit> getOwnersSocietyOffice() {
+		return ownersSocietyOffice;
+	}
+
+	public void setOwnersSocietyOffice(List<FloorUnit> ownersSocietyOffice) {
+		this.ownersSocietyOffice = ownersSocietyOffice;
+	}
+
+	
+    
 }

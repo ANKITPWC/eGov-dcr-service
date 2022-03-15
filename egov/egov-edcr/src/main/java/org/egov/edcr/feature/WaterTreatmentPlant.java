@@ -55,108 +55,181 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import org.egov.common.entity.edcr.OccupancyType;
+import org.egov.common.entity.edcr.LiquidWasteTreatementPlant;
+import org.egov.common.entity.edcr.Measurement;
+import org.egov.common.entity.edcr.OccupancyTypeHelper;
 import org.egov.common.entity.edcr.Plan;
 import org.egov.common.entity.edcr.Result;
 import org.egov.common.entity.edcr.ScrutinyDetail;
+import org.egov.common.entity.edcr.SupplyLine;
+import org.egov.edcr.constants.DxfFileConstants;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class WaterTreatmentPlant extends FeatureProcess {
-    private static final String SUB_RULE_53_5_DESCRIPTION = "Liquid waste management treatment plant ";
-    private static final String SUB_RULE_53_5 = "53-5";
-    private static final BigDecimal TWOTHOUSANDFIVEHUNDER = BigDecimal.valueOf(2500);
+	private static final String SUB_RULE_53_5_DESCRIPTION = "Water Treatment Plant";
+	private static final String SUB_RULE_53_5 = "53-5";
+	private static final BigDecimal TEN_THOUSAND = BigDecimal.valueOf(10000);
+	private static final int COLOR_WATER_TREATMENT_PLANT=1;
+	private static final int COLOR_WASTE_WATER_RECYCLING_AND_REUSE=2;
 
-    @Override
-    public Plan validate(Plan pl) {/*
-                                    * HashMap<String, String> errors = new HashMap<>(); if (pl != null && pl.getUtility() != null)
-                                    * { // liquid waste treatment plant defined or not if (pl.getVirtualBuilding() != null &&
-                                    * !pl.getVirtualBuilding().getOccupancies().isEmpty()) { for (OccupancyType occupancyType :
-                                    * pl.getVirtualBuilding().getOccupancies()) { if
-                                    * (checkOccupancyTypeEqualsToNonConditionalOccupancyTypes(occupancyType) &&
-                                    * pl.getUtility().getLiquidWasteTreatementPlant().isEmpty()) {
-                                    * errors.put(SUB_RULE_53_5_DESCRIPTION, edcrMessageSource.getMessage(OBJECTNOTDEFINED, new
-                                    * String[] { SUB_RULE_53_5_DESCRIPTION }, LocaleContextHolder.getLocale()));
-                                    * pl.addErrors(errors); break; } else if
-                                    * (checkOccupancyTypeEqualsToConditionalOccupancyTypes(occupancyType) &&
-                                    * pl.getVirtualBuilding().getTotalBuitUpArea() != null &&
-                                    * pl.getVirtualBuilding().getTotalBuitUpArea().compareTo(TWOTHOUSANDFIVEHUNDER) > 0 &&
-                                    * pl.getUtility().getLiquidWasteTreatementPlant().isEmpty()) {
-                                    * errors.put(SUB_RULE_53_5_DESCRIPTION, edcrMessageSource.getMessage(OBJECTNOTDEFINED, new
-                                    * String[] { SUB_RULE_53_5_DESCRIPTION }, LocaleContextHolder.getLocale()));
-                                    * pl.addErrors(errors); break; } } } }
-                                    */
-        return pl;
-    }
+	@Override
+	public Plan validate(Plan pl) {
+		
+		return pl;
+	}
 
-    @Override
-    public Plan process(Plan pl) {/*
-                                   * validate(pl); scrutinyDetail = new ScrutinyDetail(); scrutinyDetail.addColumnHeading(1,
-                                   * RULE_NO); scrutinyDetail.addColumnHeading(2, DESCRIPTION); scrutinyDetail.addColumnHeading(3,
-                                   * REQUIRED); scrutinyDetail.addColumnHeading(4, PROVIDED); scrutinyDetail.addColumnHeading(5,
-                                   * STATUS); scrutinyDetail.setKey("Common_Water Treatment Plant"); if (pl.getVirtualBuilding()
-                                   * != null && !pl.getVirtualBuilding().getOccupancies().isEmpty()) { for (OccupancyType
-                                   * occupancyType : pl.getVirtualBuilding().getOccupancies()) { if
-                                   * (checkOccupancyTypeEqualsToNonConditionalOccupancyTypes(occupancyType)) {
-                                   * processLiquidWasteTreatment(pl); break; } else if
-                                   * (checkOccupancyTypeEqualsToConditionalOccupancyTypes(occupancyType) &&
-                                   * pl.getVirtualBuilding().getTotalBuitUpArea() != null &&
-                                   * pl.getVirtualBuilding().getTotalBuitUpArea().compareTo(TWOTHOUSANDFIVEHUNDER) > 0) {
-                                   * processLiquidWasteTreatment(pl); break; } } }
-                                   */
-        return pl;
-    }
+	@Override
+	public Plan process(Plan pl) {
+	
+//		ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
+//		scrutinyDetail.addColumnHeading(1, RULE_NO);
+//		scrutinyDetail.addColumnHeading(2, DESCRIPTION);
+//		scrutinyDetail.addColumnHeading(3, REQUIRED);
+//		scrutinyDetail.addColumnHeading(4, PROVIDED);
+//		scrutinyDetail.addColumnHeading(5, STATUS);
+//		scrutinyDetail.setKey("Common_Water Treatment Plant");
+//		processWaterTreatmentPlant(pl,scrutinyDetail);
+//		pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
+		
+		ScrutinyDetail scrutinyDetail1 = new ScrutinyDetail();
+		scrutinyDetail1.addColumnHeading(1, RULE_NO);
+		scrutinyDetail1.addColumnHeading(2, DESCRIPTION);
+		scrutinyDetail1.addColumnHeading(3, REQUIRED);
+		scrutinyDetail1.addColumnHeading(4, PROVIDED);
+		scrutinyDetail1.addColumnHeading(5, STATUS);
+		scrutinyDetail1.setKey("Common_Waste Water Recycling And Reuse");
+		processWasteWaterRecyclingAndReus(pl, scrutinyDetail1);
+		pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail1);
+		
+		return pl;
+	}
 
-    private void processLiquidWasteTreatment(Plan pl) {
-        if (!pl.getUtility().getLiquidWasteTreatementPlant().isEmpty()) {
-            setReportOutputDetailsWithoutOccupancy(pl, SUB_RULE_53_5, SUB_RULE_53_5_DESCRIPTION, "",
-                    OBJECTDEFINED_DESC, Result.Accepted.getResultVal());
-            return;
-        } else {
-            setReportOutputDetailsWithoutOccupancy(pl, SUB_RULE_53_5, SUB_RULE_53_5_DESCRIPTION, "",
-                    OBJECTNOTDEFINED_DESC, Result.Not_Accepted.getResultVal());
-            return;
-        }
-    }
+	private void processWaterTreatmentPlant(Plan pl,ScrutinyDetail scrutinyDetail) {
+		String subRule = SUB_RULE_53_5;
+		String subRuleDesc = SUB_RULE_53_5_DESCRIPTION;
+		BigDecimal expectedTankCapacity = BigDecimal.ZERO;
+		BigDecimal plotArea = pl.getPlot() != null ? pl.getPlot().getArea() : BigDecimal.ZERO;
+		OccupancyTypeHelper mostRestrictiveFarHelper = pl.getVirtualBuilding() != null
+				? pl.getVirtualBuilding().getMostRestrictiveFarHelper()
+				: null;
+		boolean isWaterTreatmentPlantRequired=false;
+		
+		List<LiquidWasteTreatementPlant> liquidWasteTreatementPlants=getLiquidWasteTreatementPlantByColorCode(pl.getUtility().getLiquidWasteTreatementPlant(), COLOR_WATER_TREATMENT_PLANT);
+		
+		if (plotArea.compareTo(new BigDecimal("115")) >0 && (DxfFileConstants.OC_COMMERCIAL.equals(mostRestrictiveFarHelper.getType().getCode())
+				|| DxfFileConstants.OC_PUBLIC_UTILITY.equals(mostRestrictiveFarHelper.getType().getCode())
+				|| DxfFileConstants.OC_INDUSTRIAL_ZONE.equals(mostRestrictiveFarHelper.getType().getCode())
+				|| DxfFileConstants.OC_EDUCATION.equals(mostRestrictiveFarHelper.getType().getCode())
+				|| DxfFileConstants.OC_TRANSPORTATION.equals(mostRestrictiveFarHelper.getType().getCode())
+				|| DxfFileConstants.OC_MIXED_USE.equals(mostRestrictiveFarHelper.getType().getCode())
+				)) {
+			isWaterTreatmentPlantRequired=true;
+		}
+		
+		//Rain Water Harvesting
+		
+		if (!isWaterTreatmentPlantRequired) {
 
-    private boolean checkOccupancyTypeEqualsToNonConditionalOccupancyTypes(OccupancyType occupancyType) {
-        return occupancyType.equals(OccupancyType.OCCUPANCY_B1) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_B2) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_B3) || occupancyType.equals(OccupancyType.OCCUPANCY_C) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_C1) || occupancyType.equals(OccupancyType.OCCUPANCY_C2) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_C3) || occupancyType.equals(OccupancyType.OCCUPANCY_D) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_D1) || occupancyType.equals(OccupancyType.OCCUPANCY_D2) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_G1) || occupancyType.equals(OccupancyType.OCCUPANCY_G2) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_H) || occupancyType.equals(OccupancyType.OCCUPANCY_I1) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_I2);
-    }
+			if (liquidWasteTreatementPlants != null && liquidWasteTreatementPlants.size()>0) {
+				setReportOutputDetails(scrutinyDetail, subRule, subRuleDesc, DxfFileConstants.OPTIONAL,
+						DxfFileConstants.PROVIDED,
+						Result.Verify.getResultVal());
+			} else {
+				setReportOutputDetails(scrutinyDetail, subRule, subRuleDesc, DxfFileConstants.OPTIONAL, "Not Defined in the plan",
+						Result.Verify.getResultVal());
+			}
 
-    private boolean checkOccupancyTypeEqualsToConditionalOccupancyTypes(OccupancyType occupancyType) {
-        return occupancyType.equals(OccupancyType.OCCUPANCY_A1) || occupancyType.equals(OccupancyType.OCCUPANCY_A2) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_A3) || occupancyType.equals(OccupancyType.OCCUPANCY_A4) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_A5) || occupancyType.equals(OccupancyType.OCCUPANCY_E) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_F) || occupancyType.equals(OccupancyType.OCCUPANCY_F1) ||
-                occupancyType.equals(OccupancyType.OCCUPANCY_F2) || occupancyType.equals(OccupancyType.OCCUPANCY_F3)
-                || occupancyType.equals(OccupancyType.OCCUPANCY_F4);
-    }
+		} else  if(isWaterTreatmentPlantRequired){
+			if ((liquidWasteTreatementPlants!=null)&&(liquidWasteTreatementPlants.size() > 0))
+				setReportOutputDetails(scrutinyDetail, subRule, subRuleDesc, "Mandatory",
+						DxfFileConstants.PROVIDED,
+						Result.Verify.getResultVal());
+			else
+				setReportOutputDetails(scrutinyDetail, subRule, subRuleDesc, "Mandatory", "Not Defined in the plan",
+						Result.Not_Accepted.getResultVal());
+		}
+		
 
-    private void setReportOutputDetailsWithoutOccupancy(Plan pl, String ruleNo, String ruleDesc, String expected, String actual,
-            String status) {
-        Map<String, String> details = new HashMap<>();
-        details.put(RULE_NO, ruleNo);
-        details.put(DESCRIPTION, ruleDesc);
-        details.put(REQUIRED, expected);
-        details.put(PROVIDED, actual);
-        details.put(STATUS, status);
-        scrutinyDetail.getDetail().add(details);
-        pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
-    }
+	}
 
-    @Override
-    public Map<String, Date> getAmendments() {
-        return new LinkedHashMap<>();
-    }
+	private void processWasteWaterRecyclingAndReus(Plan pl,ScrutinyDetail scrutinyDetail) {
+		String subRule = SUB_RULE_53_5;
+		String subRuleDesc = "Waste water recycling system for horticultural purposes";
+		BigDecimal plotArea = pl.getPlot() != null ? pl.getPlot().getArea() : BigDecimal.ZERO;
+	
+		boolean isWasteWaterRecyclingAndReusRequired=false;
+		
+		List<LiquidWasteTreatementPlant> liquidWasteTreatementPlants=getLiquidWasteTreatementPlantByColorCode(pl.getUtility().getLiquidWasteTreatementPlant(), COLOR_WASTE_WATER_RECYCLING_AND_REUSE);
+		
+		if (plotArea.compareTo(new BigDecimal("500")) >0 && DxfFileConstants.YES.equals(pl.getPlanInformation().getWasteWaterDischargePerDay())) {
+			isWasteWaterRecyclingAndReusRequired=true;
+		}
+		
+		if (!isWasteWaterRecyclingAndReusRequired) {
+
+			if (liquidWasteTreatementPlants != null && liquidWasteTreatementPlants.size()>0) {
+				setReportOutputDetails(scrutinyDetail, subRule, subRuleDesc, DxfFileConstants.OPTIONAL,
+						DxfFileConstants.PROVIDED,
+						Result.Accepted.getResultVal());
+			} else {
+				setReportOutputDetails(scrutinyDetail, subRule, subRuleDesc, DxfFileConstants.OPTIONAL, "Not Defined in the plan",
+						Result.Accepted.getResultVal());
+			}
+
+		} else  if(isWasteWaterRecyclingAndReusRequired){
+			if ((liquidWasteTreatementPlants!=null)&&(liquidWasteTreatementPlants.size() > 0))
+				setReportOutputDetails(scrutinyDetail, subRule, subRuleDesc, DxfFileConstants.MANDATORY,
+						DxfFileConstants.PROVIDED,
+						Result.Accepted.getResultVal());
+			else
+				setReportOutputDetails(scrutinyDetail, subRule, subRuleDesc, DxfFileConstants.MANDATORY, "Not Defined in the plan",
+						Result.Not_Accepted.getResultVal());
+		}
+		
+
+	}
+	
+	private void setReportOutputDetails(ScrutinyDetail scrutinyDetail, String ruleNo, String ruleDesc, String expected, String actual,
+			String status) {
+		Map<String, String> details = new HashMap<>();
+		details.put(RULE_NO, ruleNo);
+		details.put(DESCRIPTION, ruleDesc);
+		details.put(REQUIRED, expected);
+		details.put(PROVIDED, actual);
+		details.put(STATUS, status);
+		scrutinyDetail.getDetail().add(details);
+		//pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
+	}
+
+	private List<LiquidWasteTreatementPlant> getLiquidWasteTreatementPlantByColorCode(
+			List<LiquidWasteTreatementPlant> wasteTreatementPlants, int colorCode) {
+
+		List<LiquidWasteTreatementPlant> liquidWasteTreatementPlants = wasteTreatementPlants.stream()
+				.filter(measurement -> measurement.getColorCode() == colorCode).collect(Collectors.toList());
+
+		return liquidWasteTreatementPlants;
+	}
+
+	private void setReportOutputDetailsWithoutOccupancy(Plan pl, String ruleNo, String ruleDesc, String expected,
+			String actual, String status) {
+		Map<String, String> details = new HashMap<>();
+		details.put(RULE_NO, ruleNo);
+		details.put(DESCRIPTION, ruleDesc);
+		details.put(REQUIRED, expected);
+		details.put(PROVIDED, actual);
+		details.put(STATUS, status);
+		scrutinyDetail.getDetail().add(details);
+		pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
+	}
+
+	@Override
+	public Map<String, Date> getAmendments() {
+		return new LinkedHashMap<>();
+	}
 }

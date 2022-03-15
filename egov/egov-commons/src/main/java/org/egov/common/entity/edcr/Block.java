@@ -91,10 +91,18 @@ public class Block extends Measurement {
     private List<TerraceUtility> terraceUtilities;
     private FireTenderMovement fireTenderMovement;
     private List<Measurement> parapetWithColor = new ArrayList<>();
+    private BigDecimal numberOfOccupantsOrUsersOrBedBlk;
+    private boolean assemblyBuilding;
+    private List<BigDecimal> genralStairParapets;
+    private List<BigDecimal> dARailingParapets;
+    private List<BigDecimal> genralParapets;
+    private List<BigDecimal> specialLiftHandrails;
     private Parapet parapetV2;
     private Chimney chimneyV2;
     private List<Portico> porticos = new ArrayList<>();
-
+    private boolean outHouse;
+    private boolean publicWashroom;
+    private boolean glassFacadeOpening;
     @Override
     public String toString() {
         return "Block [building=" + building + ", name=" + name + ", number=" + number + ", setBacks=" + setBacks
@@ -397,7 +405,60 @@ public class Block extends Measurement {
         this.parapetWithColor = parapetWithColor;
     }
 
-	public Parapet getParapetV2() {
+	public BigDecimal getNumberOfOccupantsOrUsersOrBedBlk() {
+		return numberOfOccupantsOrUsersOrBedBlk;
+	}
+
+	public void setNumberOfOccupantsOrUsersOrBedBlk(BigDecimal numberOfOccupantsOrUsersOrBedBlk) {
+		this.numberOfOccupantsOrUsersOrBedBlk = numberOfOccupantsOrUsersOrBedBlk;
+	}
+
+	public boolean isAssemblyBuilding() {
+		return assemblyBuilding;
+	}
+
+	public void setAssemblyBuilding(boolean assemblyBuilding) {
+		this.assemblyBuilding = assemblyBuilding;
+	}
+
+	public List<BigDecimal> getGenralStairParapets() {
+		return genralStairParapets;
+	}
+
+	public void setGenralStairParapets(List<BigDecimal> genralStairParapets) {
+		this.genralStairParapets = genralStairParapets;
+	}
+
+	public List<BigDecimal> getdARailingParapets() {
+		return dARailingParapets;
+	}
+
+	public void setdARailingParapets(List<BigDecimal> dARailingParapets) {
+		this.dARailingParapets = dARailingParapets;
+	}
+
+	public List<BigDecimal> getGenralParapets() {
+		return genralParapets;
+	}
+
+	public void setGenralParapets(List<BigDecimal> genralParapets) {
+		this.genralParapets = genralParapets;
+	}
+
+	public List<DARamp> getDaRamps() {
+		return daRamps;
+	}
+
+	public List<BigDecimal> getSpecialLiftHandrails() {
+		return specialLiftHandrails;
+	}
+
+	public void setSpecialLiftHandrails(List<BigDecimal> specialLiftHandrails) {
+		this.specialLiftHandrails = specialLiftHandrails;
+	}
+
+	
+      public Parapet getParapetV2() {
 		return parapetV2;
 	}
 
@@ -425,4 +486,28 @@ public class Block extends Measurement {
 		this.porticos.add(portico);
 	}
 
+	public boolean isOutHouse() {
+		return outHouse;
+	}
+
+	public void setOutHouse(boolean outHouse) {
+		this.outHouse = outHouse;
+	}
+
+	public boolean isPublicWashroom() {
+		return publicWashroom;
+	}
+
+	public void setPublicWashroom(boolean publicWashroom) {
+		this.publicWashroom = publicWashroom;
+	}
+
+	public boolean isGlassFacadeOpening() {
+		return glassFacadeOpening;
+	}
+
+	public void setGlassFacadeOpening(boolean glassFacadeOpening) {
+		this.glassFacadeOpening = glassFacadeOpening;
+	}
+	
 }

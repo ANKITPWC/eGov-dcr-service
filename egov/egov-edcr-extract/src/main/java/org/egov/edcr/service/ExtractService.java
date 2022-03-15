@@ -60,11 +60,12 @@ public class ExtractService {
 
     private Logger LOG = Logger.getLogger(ExtractService.class);
 
-    public Plan extract(File dxfFile, Amendment amd, Date scrutinyDate, List<PlanFeature> features) {
+    public Plan extract(File dxfFile, Amendment amd, Date scrutinyDate, List<PlanFeature> features,String tenantID) {
 
         PlanInformation pi = new PlanInformation();
         DXFDocument doc = getDxfDocument(dxfFile);
         PlanDetail planDetail = new PlanDetail();
+        planDetail.setThirdPartyUserTenantld(tenantID);
         planDetail.setDoc(doc);
         planDetail.setPlanInformation(pi);
         planDetail.setApplicationDate(scrutinyDate);
@@ -93,11 +94,13 @@ public class ExtractService {
         if (planDetail.getErrors().size() > 0)
             return (Plan) planDetail;
         Boolean mdmsEnabled = mdmsConfiguration.getMdmsEnabled();
+//        Boolean mdmsEnabled = false;
         if (mdmsEnabled != null && mdmsEnabled) {
             City stateCity = cityService.fetchStateCityDetails();
-            String tenantID = ApplicationThreadLocals.getTenantID();
+//            String tenantID = ApplicationThreadLocals.getTenantID();
+            
             Object mdmsData = edcrMdmsUtil.mDMSCall(new RequestInfo(),
-                    new StringBuilder().append(stateCity.getCode()).append(".").append(tenantID).toString());
+                    new StringBuilder().append(tenantID).toString());
 
             if (mdmsData == null) {
                 tenantID = stateCity.getCode();
