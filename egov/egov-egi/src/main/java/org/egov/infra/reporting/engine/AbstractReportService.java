@@ -175,12 +175,10 @@ public abstract class AbstractReportService<T> implements ReportService {
                 if (reportTemplate == null) {
                     String errMsg = "Report template [" + templateName + "] could not be loaded";
                     LOGGER.error(errMsg);
-                    throw new ApplicationRuntimeException(errMsg);
                 }
             } catch (ApplicationRuntimeException e) {
                 String errMsg = "Exception in getting report template [" + templateName + "]";
                 LOGGER.error(errMsg, e);
-                throw new ApplicationRuntimeException(errMsg, e);
             }
         }
         return reportTemplate;
@@ -191,7 +189,7 @@ public abstract class AbstractReportService<T> implements ReportService {
         T report = null;
         try {
             report = getTemplate(templateName);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             LOGGER.error(templateName + " is not a valid template name.", e);
         }
 

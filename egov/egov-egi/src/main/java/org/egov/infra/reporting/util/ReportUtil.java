@@ -112,7 +112,7 @@ public final class ReportUtil {
     }
 
     public static String getImageURL(String imagePathWithContextRoot) {
-        return getDomainURL()+imagePathWithContextRoot;
+        return getDomainURL() + imagePathWithContextRoot;
     }
 
     public static String getCityName() {
@@ -147,19 +147,19 @@ public final class ReportUtil {
             return reportProps;
         } catch (IOException e) {
             LOGGER.warn("Exception while loading report configuration file [{}]", REPORT_CONFIG_FILE, e);
-            return null;
         }
+        return null;
     }
 
-    public static Object fetchFromDBSql(Connection connection, String sqlQuery) throws SQLException {
+    public static Object fetchFromDBSql(Connection connection, String sqlQuery) {
         try (PreparedStatement statement = connection.prepareStatement(sqlQuery);
                 ResultSet resultSet = statement.executeQuery()) {
             return resultSet.next() ? resultSet.getString(1) : null;
         } catch (SQLException e) {
             String errMsg = "Exception while executing query [" + sqlQuery + "]";
             LOGGER.error(errMsg, e);
-            throw new ApplicationRuntimeException(errMsg, e);
         }
+        return null;
     }
 
     public static Date getDate(int year, int month, int date) {

@@ -69,11 +69,9 @@ import javax.annotation.Resource;
 
 import org.egov.infra.admin.master.entity.City;
 import org.egov.infra.admin.master.repository.CityRepository;
-import org.egov.infra.notification.service.NotificationService;
 import org.egov.infra.utils.FileStoreUtils;
 import org.egov.infra.utils.TenantUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -83,165 +81,134 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CityService {
 
-	private static final String CITY_DATA_CACHE_KEY = "%s-city-pref";
-	private static final String CITY_LOGO_CACHE_KEY = "%s-city-logo";
-	private static final String CITY_LOGO_HASH_KEY = "city-logo";
+    private static final String CITY_DATA_CACHE_KEY = "%s-city-pref";
+    private static final String CITY_LOGO_CACHE_KEY = "%s-city-logo";
+    private static final String CITY_LOGO_HASH_KEY = "city-logo";
 
-	private final CityRepository cityRepository;
+    private final CityRepository cityRepository;
 
-	@Autowired
-	private NotificationService notificationService;
+    @Autowired
+    private TenantUtils tenantUtils;
 
-	@Autowired
-	private TenantUtils tenantUtils;
+    @Resource(name = "redisTemplate")
+    private HashOperations<String, String, Object> cityPrefCache;
 
-	@Resource(name = "redisTemplate")
-	private HashOperations<String, String, Object> cityPrefCache;
+    @Resource(name = "redisTemplate")
+    private HashOperations<String, String, Object> cityLogoCache;
 
-	@Resource(name = "redisTemplate")
-	private HashOperations<String, String, Object> cityLogoCache;
+    @Autowired
+    private RedisTemplate<Object, Object> redisTemplate;
 
-	@Autowired
-	private RedisTemplate<Object, Object> redisTemplate;
+    @Autowired
+    private FileStoreUtils fileStoreUtils;
 
-	@Autowired
-	private FileStoreUtils fileStoreUtils;
+    @Autowired
+    public CityService(final CityRepository cityRepository) {
+        this.cityRepository = cityRepository;
+    }
 
-//    @Value
-//    private String ulbLogoURI;
+    @Transactional
+    public City updateCity(City city) {
+        redisTemplate.delete(cityPrefCacheKey());
+        redisTemplate.delete(cityLogoCacheKey());
+        cityDataAsMap();
+        return cityRepository.save(city);
+    }
 
-	@Autowired
-	public CityService(final CityRepository cityRepository) {
-		this.cityRepository = cityRepository;
-	}
+    public City getCityByURL(String url) {
+        return cityRepository.findByDomainURL(url);
+    }
 
-	@Transactional
-	public City updateCity(City city) {
-		redisTemplate.delete(cityPrefCacheKey());
-		redisTemplate.delete(cityLogoCacheKey());
-		cityDataAsMap();
-		return cityRepository.save(city);
-	}
+    public City getCityByName(String cityName) {
+        return cityRepository.findByName(cityName);
+    }
 
-	public City getCityByURL(String url) {
-		return cityRepository.findByDomainURL(url);
-	}
+    public City getCityByCode(String code) {
+        return cityRepository.findByCode(code);
+    }
 
-	public City getCityByName(String cityName) {
-		return cityRepository.findByName(cityName);
-	}
+    public List<City> findAll() {
+        return cityRepository.findAll();
+    }
 
-	public City getCityByCode(String code) {
-		return cityRepository.findByCode(code);
-	}
+    public City fetchStateCityDetails() {
+        return cityRepository.findStateCityDetails();
+    }
 
-	public List<City> findAll() {
-		return cityRepository.findAll();
-	}
+    public Map<String, Object> cityDataAsMap() {
+        Map<String, Object> cityPrefs = cityPrefCache.entries(cityPrefCacheKey());
+        if (cityPrefs.isEmpty()) {
 
-	public City fetchStateCityDetails() {
-		return cityRepository.findStateCityDetails();
-	}
+            List<City> cityEntries = cityRepository.findAll();
+            if (cityEntries != null && cityEntries.size() == 1) {
+                cityPrefCache.putAll(cityPrefCacheKey(), cityEntries.get(0).toMap());
+            } else {
+                if (getCityByURL(getDomainName()) != null)
+                    cityPrefCache.putAll(cityPrefCacheKey(), getCityByURL(getDomainName()).toMap());
+                else
+                    cityPrefCache.putAll(cityPrefCacheKey(), cityEntries.get(0).toMap());
+            }
+            // cityPrefCache.putAll(cityPrefCacheKey(), getCityByURL(getDomainName()).toMap());
+            cityPrefs = cityPrefCache.entries(cityPrefCacheKey());
+        }
+        return cityPrefs;
+    }
 
-	public void sentFeedBackMail(String email, String subject, String message) {
-		notificationService.sendEmail(email, subject, message);
-	}
+    public String getCityCode() {
+        return (String) cityDataForKey(CITY_CODE_KEY);
+    }
 
-	public Map<String, Object> cityDataAsMap() {
-		Map<String, Object> cityPrefs = cityPrefCache.entries(cityPrefCacheKey());
-		if (cityPrefs.isEmpty()) {
+    public String getMunicipalityName() {
+        return (String) cityDataForKey(CITY_CORP_NAME_KEY);
+    }
 
-			List<City> cityEntries = cityRepository.findAll();
-			if (cityEntries != null && cityEntries.size() == 1) {
-				cityPrefCache.putAll(cityPrefCacheKey(), cityEntries.get(0).toMap());
-			} else {
-				if (getCityByURL(getDomainName()) != null)
-					cityPrefCache.putAll(cityPrefCacheKey(), getCityByURL(getDomainName()).toMap());
-				else
-					cityPrefCache.putAll(cityPrefCacheKey(), cityEntries.get(0).toMap());
-			}
-			// cityPrefCache.putAll(cityPrefCacheKey(),
-			// getCityByURL(getDomainName()).toMap());
-			cityPrefs = cityPrefCache.entries(cityPrefCacheKey());
-		}
-		return cityPrefs;
-	}
+    public String getCityGrade() {
+        return (String) cityDataForKey(CITY_CORP_GRADE_KEY);
+    }
 
-	public String getCityCode() {
-		return (String) cityDataForKey(CITY_CODE_KEY);
-	}
+    public String getContactEmail() {
+        return (String) cityDataForKey(CITY_CORP_EMAIL_KEY);
+    }
 
-	public String getMunicipalityName() {
-		return (String) cityDataForKey(CITY_CORP_NAME_KEY);
-	}
+    public String getDistrictName() {
+        return (String) cityDataForKey(CITY_DIST_NAME_KEY);
+    }
 
-	public String getCityGrade() {
-		return (String) cityDataForKey(CITY_CORP_GRADE_KEY);
-	}
+    public String getCityLogoURL() {
+        return format(CITY_LOGO_URL, getDomainURL());
+    }
 
-	public String getContactEmail() {
-		return (String) cityDataForKey(CITY_CORP_EMAIL_KEY);
-	}
+    public String getCityLogoURLByCurrentTenant() {
+        Map<String, String> tenants = tenantUtils.tenantsMap();
+        return format(CITY_LOGO_URL, tenants.get(getTenantID()));
+    }
 
-	public String getDistrictName() {
-		return (String) cityDataForKey(CITY_DIST_NAME_KEY);
-	}
+    public byte[] getCityLogoAsBytes() {
+        byte[] cityLogo = (byte[]) cityLogoCache.get(cityLogoCacheKey(), CITY_LOGO_HASH_KEY);
+        if (cityLogo == null || cityLogo.length < 1) {
+            cityLogo = fileStoreUtils.fileAsByteArray(getCityLogoFileStoreId(), getCityCode());
+            cityLogoCache.put(cityLogoCacheKey(), CITY_LOGO_HASH_KEY, cityLogo);
+        }
+        return cityLogo;
+    }
 
-	public String getCityLogoURL() {
-		return format(CITY_LOGO_URL, getDomainURL());
-	}
+    public InputStream getCityLogoAsStream() {
+        return new ByteArrayInputStream(getCityLogoAsBytes());
+    }
 
-	public String getCityLogoURLByCurrentTenant() {
-		Map<String, String> tenants = tenantUtils.tenantsMap();
-		return format(CITY_LOGO_URL, tenants.get(getTenantID()));
-	}
+    public String getCityLogoFileStoreId() {
+        return (String) cityDataForKey(CITY_LOGO_FS_UUID_KEY);
+    }
 
-	public byte[] getCityLogoAsBytes() {
-		byte[] cityLogo = (byte[]) cityLogoCache.get(cityLogoCacheKey(), CITY_LOGO_HASH_KEY);
-		if (cityLogo == null || cityLogo.length < 1) {
-			cityLogo = fileStoreUtils.fileAsByteArray(getCityLogoFileStoreId(), getCityCode());
-			cityLogoCache.put(cityLogoCacheKey(), CITY_LOGO_HASH_KEY, cityLogo);
-		}
-		return cityLogo;
-	}
+    public Object cityDataForKey(String key) {
+        return cityPrefCache.get(cityPrefCacheKey(), key);
+    }
 
-	public InputStream getCityLogoAsStream() {
-		return new ByteArrayInputStream(getCityLogoAsBytes());
-	}
+    private String cityPrefCacheKey() {
+        return format(CITY_DATA_CACHE_KEY, getTenantID());
+    }
 
-	public String getCityLogoFileStoreId() {
-		return (String) cityDataForKey(CITY_LOGO_FS_UUID_KEY);
-	}
-
-	public Object cityDataForKey(String key) {
-		return cityPrefCache.get(cityPrefCacheKey(), key);
-	}
-
-	private String cityPrefCacheKey() {
-		return format(CITY_DATA_CACHE_KEY, getTenantID());
-	}
-
-	private String cityLogoCacheKey() {
-		return format(CITY_LOGO_CACHE_KEY, getTenantID());
-	}
-
-//	@Value("${ulb.logo.active}")
-//	private boolean ulbLogoActive;
-
-	@Value("${ulb.logo.uri}")
-	private String ulbLogoURI;
-
-	public String getCityLogoURLNew(String tenantId) {
-		String uri = ulbLogoURI;
-		String code = "Cuttack";
-		if (tenantId.contains(".")) {
-			code = tenantId.replace("od.", "");
-		} else {
-			code = tenantId;
-		}
-
-		uri = uri.replace("ULB", code);
-
-		return uri;
-	}
+    private String cityLogoCacheKey() {
+        return format(CITY_LOGO_CACHE_KEY, getTenantID());
+    }
 }

@@ -11,6 +11,7 @@ import org.egov.common.entity.dcr.helper.ErrorDetail;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
 
 @Service
@@ -35,14 +36,14 @@ public class MDMSValidator {
         return errors;
     }
 
-    public Map<String, List<Object>> getAttributeValues(Object mdmsData) {
+    public Map<String, List<Object>> getAttributeValues(Object mdmsData, String moduleName) {
 
-        List<String> modulepaths = Arrays.asList("$.MdmsRes.BPA");
+        List<String> modulepaths = Arrays.asList("$.MdmsRes." + moduleName);
         final Map<String, List<Object>> mdmsResMap = new HashMap<>();
         modulepaths.forEach(modulepath -> {
             try {
                 mdmsResMap.putAll(JsonPath.read(mdmsData, modulepath));
-            } catch (Exception e) {
+            } catch (InvalidPathException e) {
                 LOG.error("Error while fetching MDMS data", e);
             }
         });

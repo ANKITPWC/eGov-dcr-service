@@ -89,8 +89,7 @@ public class NorthDirection extends FeatureProcess {
 		if (pl.getDrawingPreference().getNorthDirection() == null) {
 			errors.put("NORTH_DIRECTION", "NORTH_DIRECTION layer is not provided");
 			pl.addErrors(errors);
-		} else if (pl.getDrawingPreference().getNorthDirection().getDirections() != null
-				&& !pl.getDrawingPreference().getNorthDirection().getDirections().isEmpty()
+		} else if (pl.getDrawingPreference().getNorthDirection().getDirections() != null && !pl.getDrawingPreference().getNorthDirection().getDirections().isEmpty()
 				&& StringUtils.isNotBlank(pl.getDrawingPreference().getNorthDirection().getDirection())
 				&& pl.getDrawingPreference().getNorthDirection().getDirection().contains("N")) {
 			details.put(PROVIDED, "North directions provided");

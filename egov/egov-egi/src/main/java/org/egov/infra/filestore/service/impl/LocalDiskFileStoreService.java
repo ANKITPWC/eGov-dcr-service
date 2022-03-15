@@ -70,6 +70,7 @@ import static java.util.UUID.randomUUID;
 import static org.apache.commons.io.FileUtils.getUserDirectoryPath;
 import static org.apache.commons.lang3.StringUtils.defaultString;
 import static org.egov.infra.config.core.ApplicationThreadLocals.getCityCode;
+import static org.egov.infra.utils.StringUtils.normalizeString;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Component("localDiskFileStoreService")
@@ -99,8 +100,9 @@ public class LocalDiskFileStoreService implements FileStoreService {
 
     @Override
     public FileStoreMapper store(File file, String fileName, String mimeType, String moduleName, boolean deleteFile) {
-    	long start=System.currentTimeMillis();
-    	try {
+        try {
+            fileName = normalizeString(fileName);
+            moduleName = normalizeString(moduleName);
             FileStoreMapper fileMapper = new FileStoreMapper(randomUUID().toString(),
                     defaultString(fileName, file.getName()));
             Path newFilePath = this.createNewFilePath(fileMapper, moduleName);
@@ -110,20 +112,23 @@ public class LocalDiskFileStoreService implements FileStoreService {
                 LOG.info("File store source file deleted");
             return fileMapper;
         } catch (IOException e) {
-            throw new ApplicationRuntimeException(String.format("Error occurred while storing files at %s/%s/%s",
-                    this.fileStoreBaseDir, getCityCode(), moduleName), e);
-        }finally {
-        	long end=System.currentTimeMillis();
-        	long execution = end - start;
-        	LOG.info("Total time taken by filestore service : "+execution+" for file "+fileName+" mime type "+mimeType);
-		}
-    	
+            LOG.error(String.format("Error occurred while storing files at %s/%s/%s", this.fileStoreBaseDir, getCityCode(),
+                    moduleName), e);
+        }
+        return null;
     }
 
     @Override
-    public FileStoreMapper store(InputStream fileStream, String fileName, String mimeType, String moduleName, boolean closeStream) {
-    	long start=System.currentTimeMillis();
-        try {
+    public FileStoreMapper store(InputStream fileStream, String fileName, String mimeType, String moduleName,
+            boolean closeStream) {
+        return storeCommon(fileStream, fileName, mimeType, moduleName, closeStream);
+    }
+
+	private FileStoreMapper storeCommon(InputStream fileStream, String fileName, String mimeType, String moduleName,
+			boolean closeStream) {
+		try {
+            fileName = normalizeString(fileName);
+            moduleName = normalizeString(moduleName);
             FileStoreMapper fileMapper = new FileStoreMapper(randomUUID().toString(), fileName);
             Path newFilePath = this.createNewFilePath(fileMapper, moduleName);
             Files.copy(fileStream, newFilePath);
@@ -132,14 +137,10 @@ public class LocalDiskFileStoreService implements FileStoreService {
                 fileStream.close();
             return fileMapper;
         } catch (IOException e) {
-            throw new ApplicationRuntimeException(String.format("Error occurred while storing files at %s/%s/%s",
-                    this.fileStoreBaseDir, getCityCode(), moduleName), e);
-        }finally {
-        	long end=System.currentTimeMillis();
-        	long execution = end - start;
-        	LOG.info("Total time taken by filestore service : "+execution+" for file "+fileName+" mime type "+mimeType);
-		}
-    }
+            LOG.error(String.format("Error occurred while storing files at %s/%s/%s", this.fileStoreBaseDir, getCityCode(), moduleName), e);
+        }
+        return null;
+	}
 
     @Override
     public File fetch(FileStoreMapper fileMapper, String moduleName) {
@@ -159,6 +160,8 @@ public class LocalDiskFileStoreService implements FileStoreService {
 
     @Override
     public Path fetchAsPath(String fileStoreId, String moduleName) {
+        fileStoreId = normalizeString(fileStoreId);
+        moduleName = normalizeString(moduleName);
         Path fileDirPath = this.getFileDirectoryPath(moduleName);
         if (!fileDirPath.toFile().exists())
             throw new ApplicationRuntimeException(String.format("File Store does not exist at Path : %s/%s/%s",
@@ -168,6 +171,8 @@ public class LocalDiskFileStoreService implements FileStoreService {
 
     @Override
     public void delete(String fileStoreId, String moduleName) {
+        fileStoreId = normalizeString(fileStoreId);
+        moduleName = normalizeString(moduleName);
         Path fileDirPath = this.getFileDirectoryPath(moduleName);
         if (!fileDirPath.toFile().exists()) {
             Path filePath = this.getFilePath(fileDirPath, fileStoreId);
@@ -191,11 +196,28 @@ public class LocalDiskFileStoreService implements FileStoreService {
     }
 
     private Path getFileDirectoryPath(String moduleName) {
-        return Paths.get(new StringBuilder().append(this.fileStoreBaseDir).append(separator).
-                append(getCityCode()).append(separator).append(moduleName).toString());
+        return Paths.get(new StringBuilder().append(this.fileStoreBaseDir).append(separator).append(getCityCode())
+                .append(separator).append(moduleName).toString());
     }
 
     private Path getFilePath(Path fileDirPath, String fileStoreId) {
         return Paths.get(fileDirPath + separator + fileStoreId);
     }
+
+	@Override
+	public FileStoreMapper store(InputStream fileStream, String fileName, String mimeType, String moduleName,
+			String tenantId) {
+		return null;
+	}
+
+	@Override
+	public FileStoreMapper store(InputStream fileStream, String fileName, String mimeType, String moduleName,
+			String tenantId, boolean closeStream) {
+		return storeCommon(fileStream, fileName, mimeType, moduleName, closeStream);
+	}
+
+	@Override
+	public File fetch(String fileStoreId, String moduleName, String tenantId) {
+		return fetchAsPath(fileStoreId, moduleName).toFile();
+	}
 }

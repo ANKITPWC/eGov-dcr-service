@@ -47,124 +47,28 @@
 
 package org.egov.edcr.feature;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-import org.egov.common.entity.edcr.Block;
-import org.egov.common.entity.edcr.Floor;
 import org.egov.common.entity.edcr.Plan;
-import org.egov.common.entity.edcr.Result;
-import org.egov.common.entity.edcr.ScrutinyDetail;
 import org.springframework.stereotype.Service;
 
 @Service
 public class GlassFacadeOpening extends FeatureProcess {
-	private static final Logger LOG = Logger.getLogger(GlassFacadeOpening.class);
-	@Override
-	public Plan validate(Plan plan) {
-		return plan;
-	}
+    @Override
+    public Plan validate(Plan plan) {
+        return plan;
+    }
 
-	@Override
-	public Plan process(Plan pl) {
-		
-		for (Block b : pl.getBlocks()) {
-			if (b.isGlassFacadeOpening()) {
-				ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
-				scrutinyDetail.setKey("Block_" + b.getNumber() + "_" + "Glass Facade Opening");
-				scrutinyDetail.addColumnHeading(1, RULE_NO);
-				scrutinyDetail.addColumnHeading(2, DESCRIPTION);
-				scrutinyDetail.addColumnHeading(3, FLOOR);
-				scrutinyDetail.addColumnHeading(4, REQUIRED);
-				scrutinyDetail.addColumnHeading(5, PROVIDED);
-				scrutinyDetail.addColumnHeading(6, STATUS);
+    @Override
+    public Plan process(Plan plan) {
+        return plan;
+    }
 
-				for (Floor floor : b.getBuilding().getFloors()) {
-					if (floor.getNumber() < 0)
-						continue;
-
-					// Height
-					BigDecimal minHeight = new BigDecimal("1.5");
-					BigDecimal minWidth = new BigDecimal("1.5");
-					BigDecimal RequiredfloorToGlassOpeningHeights = new BigDecimal("1.2");// ==
-
-					List<org.egov.common.entity.edcr.GlassFacadeOpening> facadeOpenings = floor
-							.getGlassFacadeOpenings();
-					
-					if(facadeOpenings==null || facadeOpenings.size()<2) {
-						pl.addError("GlassFacadeOpenings", "Minimum two GlassFacade required.");
-					}
-
-					BigDecimal providedMinHeight=BigDecimal.ZERO;
-					BigDecimal providedWidth=BigDecimal.ZERO;
-					BigDecimal providedFloorToGlassOpeningHeightMin=BigDecimal.ZERO;
-					BigDecimal providedFloorToGlassOpeningHeightMax=BigDecimal.ZERO;
-					
-					//
-					int minCount = 2;
-					int providedCount=floor.getGlassFacadeOpenings()!=null?floor.getGlassFacadeOpenings().size():0;
-					
-					List<BigDecimal> widths=new ArrayList<>();
-					List<BigDecimal> heights=new ArrayList<>();
-					List<BigDecimal> floorToGlassOpeningHeights=new ArrayList<>();
-					for(org.egov.common.entity.edcr.GlassFacadeOpening glassFacadeOpening:floor.getGlassFacadeOpenings()) {
-						widths.addAll(glassFacadeOpening.getWidths());
-						heights.addAll(glassFacadeOpening.getHeights());
-						floorToGlassOpeningHeights.addAll(glassFacadeOpening.getFloorToGlassOpeningHeights());
-					}
-					
-					try {
-						providedWidth=widths.stream().reduce(BigDecimal::min).get();
-						providedMinHeight=heights.stream().reduce(BigDecimal::min).get();
-						providedFloorToGlassOpeningHeightMin=floorToGlassOpeningHeights.stream().reduce(BigDecimal::min).get();
-						providedFloorToGlassOpeningHeightMax=floorToGlassOpeningHeights.stream().reduce(BigDecimal::max).get();
-					}catch (Exception e) {
-						LOG.error("Parssing error", e);
-					}
-					//count
-					setReportOutputDetails(pl, floor.getNumber()+"", RULE_NO, "Count", "2", providedCount+"", providedCount>=2?Result.Accepted.getResultVal():Result.Not_Accepted.getResultVal(), scrutinyDetail);
-					
-					//width
-					setReportOutputDetails(pl, floor.getNumber()+"", RULE_NO, "Width", minWidth.toString(), providedWidth.toString(), providedWidth.compareTo(minWidth)>=0?Result.Accepted.getResultVal():Result.Not_Accepted.getResultVal(), scrutinyDetail);
-					
-					//height
-					setReportOutputDetails(pl, floor.getNumber()+"", RULE_NO, "Height", minHeight.toString(), providedMinHeight.toString(), providedMinHeight.compareTo(minHeight)>=0?Result.Accepted.getResultVal():Result.Not_Accepted.getResultVal(), scrutinyDetail);
-					
-					boolean providedFloorToGlassOpeningHeightStatus=false;
-					if(providedFloorToGlassOpeningHeightMax.compareTo(providedFloorToGlassOpeningHeightMin)==0 && providedFloorToGlassOpeningHeightMin.compareTo(RequiredfloorToGlassOpeningHeights)==0) {
-						providedFloorToGlassOpeningHeightStatus=true;
-					}
-					//providedFloorToGlassOpeningHeightMax
-					setReportOutputDetails(pl, floor.getNumber()+"", RULE_NO, "Height from floor To glassOpening", RequiredfloorToGlassOpeningHeights.toString(),providedFloorToGlassOpeningHeightMax.compareTo(providedFloorToGlassOpeningHeightMin)>0?providedFloorToGlassOpeningHeightMax.toString():providedFloorToGlassOpeningHeightMin.toString(), providedFloorToGlassOpeningHeightStatus?Result.Accepted.getResultVal():Result.Not_Accepted.getResultVal(), scrutinyDetail);
-					
-				}
-				pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
-			}
-		}
-		return pl;
-	}
-
-	private void setReportOutputDetails(Plan pl, String floor, String ruleNo, String ruleDesc, String expected,
-			String actual, String status, ScrutinyDetail scrutinyDetail) {
-		Map<String, String> details = new HashMap<>();
-		details.put(RULE_NO, ruleNo);
-		details.put(FLOOR, floor);
-		details.put(DESCRIPTION, ruleDesc);
-		details.put(REQUIRED, expected);
-		details.put(PROVIDED, actual);
-		details.put(STATUS, status);
-		scrutinyDetail.getDetail().add(details);
-	}
-
-	@Override
-	public Map<String, Date> getAmendments() {
-		return new LinkedHashMap<>();
-	}
+    @Override
+    public Map<String, Date> getAmendments() {
+        return new LinkedHashMap<>();
+    }
 
 }

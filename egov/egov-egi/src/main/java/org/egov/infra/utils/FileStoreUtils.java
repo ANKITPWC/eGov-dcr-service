@@ -48,25 +48,13 @@
 
 package org.egov.infra.utils;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.egov.infra.exception.ApplicationRuntimeException;
-import org.egov.infra.filestore.entity.FileStoreMapper;
-import org.egov.infra.filestore.repository.FileStoreMapperRepository;
-import org.egov.infra.filestore.service.FileStoreService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.CacheControl;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import static java.lang.String.format;
+import static org.egov.infra.utils.ApplicationConstant.CONTENT_DISPOSITION;
+import static org.egov.infra.utils.ApplicationConstant.CONTENT_DISPOSITION_ATTACH;
+import static org.egov.infra.utils.ApplicationConstant.CONTENT_DISPOSITION_INLINE;
+import static org.egov.infra.utils.ImageUtils.compressImage;
+import static org.egov.infra.utils.StringUtils.normalizeString;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -79,14 +67,31 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static java.lang.String.format;
-import static org.egov.infra.utils.ApplicationConstant.CONTENT_DISPOSITION;
-import static org.egov.infra.utils.ApplicationConstant.CONTENT_DISPOSITION_ATTACH;
-import static org.egov.infra.utils.ApplicationConstant.CONTENT_DISPOSITION_INLINE;
-import static org.egov.infra.utils.ImageUtils.compressImage;
-import static org.springframework.http.MediaType.APPLICATION_PDF_VALUE;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.filestore.entity.FileStoreMapper;
+import org.egov.infra.filestore.repository.FileStoreMapperRepository;
+import org.egov.infra.filestore.service.FileStoreService;
+import org.hibernate.validator.constraints.SafeHtml;
+import org.owasp.esapi.ESAPI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
+@Validated
 public class FileStoreUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileStoreUtils.class);
 
@@ -105,8 +110,10 @@ public class FileStoreUtils {
         return Optional.ofNullable(this.fileStoreMapperRepository.findByFileStoreId(fileStoreId));
     }
 
-    public ResponseEntity<InputStreamResource> fileAsResponseEntity(String fileStoreId, String moduleName, boolean toSave) {
+    public ResponseEntity<InputStreamResource> fileAsResponseEntity(@SafeHtml String fileStoreId, @SafeHtml String moduleName, boolean toSave) {
         try {
+            fileStoreId = normalizeString(fileStoreId);
+            moduleName = normalizeString(moduleName);
             Optional<FileStoreMapper> fileStoreMapper = getFileStoreMapper(fileStoreId);
             if (fileStoreMapper.isPresent()) {
                 Path file = getFileAsPath(fileStoreId, moduleName);
@@ -122,18 +129,21 @@ public class FileStoreUtils {
             }
             return ResponseEntity.notFound().build();
         } catch (IOException e) {
-            LOGGER.error("Error occurred while creating response entity from file mapper", e);
+            LOGGER.error("Error occurred while creating response entity from file mapper", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
 
     public void writeToHttpResponseStream(String fileStoreId, String moduleName, HttpServletResponse response) {
         try {
+            fileStoreId = normalizeString(fileStoreId);
+            moduleName = normalizeString(moduleName);
             FileStoreMapper fileStoreMapper = this.fileStoreMapperRepository.findByFileStoreId(fileStoreId);
             if (fileStoreMapper != null) {
                 File file = this.fileStoreService.fetch(fileStoreMapper, moduleName);
-                response.setHeader(CONTENT_DISPOSITION, format(CONTENT_DISPOSITION_INLINE, fileStoreMapper.getFileName()));
-                response.setContentType(fileStoreMapper.getContentType());
+                ESAPI.httpUtilities().addHeader(response, CONTENT_DISPOSITION, StringUtils.sanitize(format(CONTENT_DISPOSITION_INLINE, fileStoreMapper.getFileName())));
+                ESAPI.httpUtilities().addHeader(response, "content-type", StringUtils.sanitize(fileStoreMapper.getContentType()));
+                ESAPI.httpUtilities().setContentType(response);
                 OutputStream out = response.getOutputStream();
                 IOUtils.write(FileUtils.readFileToByteArray(file), out);
             }
@@ -158,7 +168,7 @@ public class FileStoreUtils {
                             else
                                 return this.fileStoreService.store(file.getInputStream(), file.getOriginalFilename(),
                                         file.getContentType(), moduleName);
-                        } catch (Exception e) {
+                        } catch (IOException e) {
                             throw new ApplicationRuntimeException("err.input.stream", e);
                         }
                     }).collect(Collectors.toSet());
@@ -167,6 +177,8 @@ public class FileStoreUtils {
     }
 
     public void copyFileToPath(Path newFilePath, String fileStoreId, String moduleName) throws IOException {
+        fileStoreId = normalizeString(fileStoreId);
+        moduleName = normalizeString(moduleName);
         Optional<FileStoreMapper> fileStoreMapper = getFileStoreMapper(fileStoreId);
         if (fileStoreMapper.isPresent()) {
             File file = fileStoreService.fetch(fileStoreMapper.get(), moduleName);
@@ -175,6 +187,8 @@ public class FileStoreUtils {
     }
 
     public byte[] fileAsByteArray(String fileStoreId, String moduleName) {
+        fileStoreId = normalizeString(fileStoreId);
+        moduleName = normalizeString(moduleName);
         try {
             Optional<FileStoreMapper> fileStoreMapper = getFileStoreMapper(fileStoreId);
             if (fileStoreMapper.isPresent()) {
@@ -189,19 +203,4 @@ public class FileStoreUtils {
         }
     }
 
-    public ResponseEntity<InputStreamResource> fileAsPDFResponse(String fileStoreId, String fileName, String moduleName) {
-        try {
-            File signedFile = fileStoreService.fetch(fileStoreId, moduleName);
-            byte[] signFileBytes = FileUtils.readFileToByteArray(signedFile);
-            return ResponseEntity.
-                    ok().
-                    contentType(MediaType.parseMediaType(APPLICATION_PDF_VALUE)).
-                    cacheControl(CacheControl.noCache()).
-                    contentLength(signFileBytes.length).
-                    header("content-disposition", "inline;filename=" + fileName + ".pdf").
-                    body(new InputStreamResource(new ByteArrayInputStream(signFileBytes)));
-        } catch (IOException e) {
-            throw new ApplicationRuntimeException("Error while reading file", e);
-        }
-    }
 }

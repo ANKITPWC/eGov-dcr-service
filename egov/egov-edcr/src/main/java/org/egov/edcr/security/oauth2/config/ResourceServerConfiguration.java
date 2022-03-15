@@ -48,7 +48,9 @@
 package org.egov.edcr.security.oauth2.config;
 
 import java.io.IOException;
+import java.io.InputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -56,7 +58,6 @@ import org.codehaus.jackson.annotate.JsonMethod;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.egov.edcr.security.oauth2.entity.SecuredResource;
-import org.egov.infra.exception.ApplicationRuntimeException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -88,14 +89,19 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
     }
 
     @Override
-    public void configure(HttpSecurity http) throws Exception {
+    public void configure(HttpSecurity http) {
         http.requestMatchers().and();
         configurePatterns(http);
-        http.exceptionHandling()
-                .accessDeniedHandler(new OAuth2AccessDeniedHandler());
+        try {
+            http.exceptionHandling()
+                    .accessDeniedHandler(new OAuth2AccessDeniedHandler());
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while authenticating: ", e);
+        }
     }
 
-    private void configurePatterns(HttpSecurity http) throws Exception {
+    private void configurePatterns(HttpSecurity http) {
+
         getSecuredResourceFromResource().getResources().forEach(record -> {
             try {
                 ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl authorizedUrl = http.authorizeRequests()
@@ -105,18 +111,26 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                 else
                     authorizedUrl.authenticated();
             } catch (Exception e) {
-                throw new ApplicationRuntimeException("Exception occured while configuring: ", e);
+                LOGGER.error("Exception occured while configuring: ", e);
             }
         });
-
     }
 
-    private SecuredResource getSecuredResourceFromResource() throws IOException {
+    private SecuredResource getSecuredResourceFromResource() {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.setVisibility(JsonMethod.FIELD, Visibility.ANY);
         mapper.configure(SerializationConfig.Feature.AUTO_DETECT_FIELDS, true);
-        return mapper.readValue(getResourcesConfig().getInputStream(),
-                SecuredResource.class);
+        InputStream inputStream = null;
+        try {
+        	inputStream = getResourcesConfig().getInputStream();
+            return mapper.readValue(inputStream,
+                    SecuredResource.class);
+        } catch (IOException e) {
+            LOGGER.error("Exception occured while reading data: ", e);
+        } finally {
+			IOUtils.closeQuietly(inputStream);
+        }
+        return null;
     }
 
     private Resource getResourcesConfig() {

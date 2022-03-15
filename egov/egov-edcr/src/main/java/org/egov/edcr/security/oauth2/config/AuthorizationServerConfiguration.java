@@ -48,14 +48,15 @@
 package org.egov.edcr.security.oauth2.config;
 
 import java.io.IOException;
+import java.io.InputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.annotate.JsonMethod;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.egov.edcr.security.oauth2.entity.SecuredClient;
-import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.rest.support.CustomTokenEnhancer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -118,7 +119,7 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                         .accessTokenValiditySeconds(client.getAccessTokenValidity() * 60)
                         .refreshTokenValiditySeconds(client.getRefreshTokenValidity() * 60);
             } catch (Exception e) {
-                throw new ApplicationRuntimeException("Exception occured while configuring: ", e);
+                LOGGER.error("Exception occured while configuring: ", e);
             }
         });
     }
@@ -129,11 +130,20 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                 .setClientDetailsService(clientDetailsService);
     }
 
-    private SecuredClient getSecuredClientFromResource() throws IOException {
+    private SecuredClient getSecuredClientFromResource() {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.setVisibility(JsonMethod.FIELD, Visibility.ANY);
         mapper.configure(SerializationConfig.Feature.AUTO_DETECT_FIELDS, true);
-        return mapper.readValue(getClientsConfig().getInputStream(), SecuredClient.class);
+        InputStream inputStream = null;
+        try {
+        	inputStream = getClientsConfig().getInputStream();
+            return mapper.readValue(inputStream, SecuredClient.class);
+        } catch (IOException e) {
+            LOGGER.error("Exception occured while reading data: ", e);
+        } finally {
+			IOUtils.closeQuietly(inputStream);
+        }
+        return null;
     }
 
     private Resource getClientsConfig() {

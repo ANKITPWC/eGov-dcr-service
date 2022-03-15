@@ -58,30 +58,30 @@
 
 	<bean id="masterDataCache" class="org.egov.infstr.utils.EgovMasterDataCaching" lazy-init="false"/>
 	
-	<bean id="persistenceService" class="org.egov.infstr.services.PersistenceService">
+	<!-- <bean id="persistenceService" class="org.egov.infstr.services.PersistenceService">
         <constructor-arg name="type">
             <null/>
         </constructor-arg>
-    </bean>
+    </bean> -->
 
-    <bean id="abstractPersistenceService" class="org.egov.infstr.services.PersistenceService" abstract="true"/>
-
+<!--     <bean id="abstractPersistenceService" class="org.egov.infstr.services.PersistenceService" abstract="true"/>
+ -->
 	<bean id="applicationCoreFilter" class="org.egov.infra.web.filter.ApplicationCoreFilter"/>
 	
 	<bean id="applicationTenantResolverFilter" class="org.egov.infra.web.filter.ApplicationTenantResolverFilter"/>
 	
 	<!-- Use this only for generic hibernate query -->
-	<bean id="entityQueryService" class="org.egov.infstr.services.PersistenceService">
+	<!-- <bean id="entityQueryService" class="org.egov.infstr.services.PersistenceService">
 		<constructor-arg name="type" >
 			<null/>
 		</constructor-arg>
-	</bean>
+	</bean> -->
 	
 	<!-- NEW WORKFLOW ADDITIONS -->
 	
-	<bean id="stateAwarePersistenceService" parent="abstractPersistenceService">
+	<!-- <bean id="stateAwarePersistenceService" parent="abstractPersistenceService">
 		<constructor-arg name="type" value="org.egov.infra.workflow.entity.StateAware" />
-	</bean>
+	</bean> -->
 	
 	<!--
 		This is a generic bean so do not use this to do transition of your own StateAware objects
@@ -91,8 +91,8 @@
 			<constructor-arg index="0" ref="myStateAwarePersistenceService"/>
 		</bean>
 	-->
-	<bean id="workflowService" class="org.egov.infra.workflow.service.SimpleWorkflowService">
-		<constructor-arg index="0" ref="stateAwarePersistenceService" />
-	</bean>
+	<!-- <bean id="workflowService" class="org.egov.infra.workflow.service.SimpleWorkflowService">
+		<constructor-arg index="0" ref="stateAwarePersistenceService" / 
+	</bean> -->
 	
 </beans>

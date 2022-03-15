@@ -84,7 +84,8 @@ public final class TenantUtils {
         URL url;
 
         if (LOG.isInfoEnabled())
-            LOG.info(String.format("cities %s", applicationConfiguration.cities().isEmpty() ? "" : applicationConfiguration.cities()));
+            LOG.info(String.format("cities %s",
+                    applicationConfiguration.cities().isEmpty() ? "" : applicationConfiguration.cities()));
         try {
             url = new URL(ApplicationThreadLocals.getDomainURL());
 
