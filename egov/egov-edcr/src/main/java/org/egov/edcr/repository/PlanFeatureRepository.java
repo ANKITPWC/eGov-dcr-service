@@ -404,8 +404,8 @@ public class PlanFeatureRepository {
         pf = new PlanFeature(ProvisionService.class);
         features.add(pf);
         
-        pf = new PlanFeature(DxfToPdfConverter.class);
-        features.add(pf);
+//        pf = new PlanFeature(DxfToPdfConverter.class);
+//        features.add(pf);
         
         
         return features;
