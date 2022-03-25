@@ -430,8 +430,7 @@ public class ProvisionService extends FeatureProcess {
 				if(hasProvidevEWSWithin5Km)
 					provided=PROVIDED_WITHIN_5KM;
 				else if(isShelterFeeRequired) {
-					provided="Shelter Fee Applicable";
-					pl.getPlanInformation().setShelterFeeRequired(isShelterFeeRequired);
+					provided="Shelter Fee Applicable (Provided - "+ pl.getTotalEWSAreaInPlot().toString()+" )";
 				}else {
 					provided=pl.getTotalEWSAreaInPlot().toString();
 				}
