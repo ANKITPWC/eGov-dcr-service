@@ -346,7 +346,8 @@ public class ProvisionService extends FeatureProcess {
 						|| DxfFileConstants.HOUSING_PROJECT.equals(occupancyTypeHelper.getSubtype().getCode()))) {
 
 			if (pl != null && pl.getPlanInformation().getPlotArea().compareTo(MIN_PLOT_SIZE_FOR_EWS) >= 0) {
-
+				
+				BigDecimal plotArea= pl.getPlanInformation().getPlotArea();
 				BigDecimal plotAreaInAcre = pl.getPlanInformation().getPlotArea()
 						.divide(ACRE_TO_SQ_MT, DECIMALDIGITS_MEASUREMENTS, ROUNDMODE_MEASUREMENTS);
 
@@ -355,15 +356,19 @@ public class ProvisionService extends FeatureProcess {
 
 				boolean status = false;
 				boolean hasProvidevEWSWithin5Km = false;
-				if (plotAreaInAcre.compareTo(PLOT_AREA_FOUR_ACRE) > 0) {
+				boolean isShelterFeeRequired=false;
+				if (plotArea.compareTo(new BigDecimal("2000")) > 0 && plotAreaInAcre.compareTo(PLOT_AREA_FOUR_ACRE) <= 0) {
 					if (pl.getTotalEWSAreaInPlot().compareTo(mandatoryEWSBUA) >= 0) {
 						status = true;
 					} else if (DxfFileConstants.YES.equalsIgnoreCase(pl.getPlanInfoProperties().get(
 							DxfFileConstants.HAS_PROJECT_PROVIDED_MIN_10_PER_BUA_FOR_EWS_WITHIN_5_KM_FROM_PROJECT_SITE))) {
 						hasProvidevEWSWithin5Km = true;
 						status = true;
+					}else {
+						status = true;
+						isShelterFeeRequired = true;
 					}
-				} else {
+				} else if(plotAreaInAcre.compareTo(PLOT_AREA_FOUR_ACRE) > 0){
 					BigDecimal mandateNsAndCf = pl.getTotalEWSAreaInPlot().multiply(MIN_RESERVE_NS_AND_CF_PERCENTAGE).setScale(SCALE, BigDecimal.ROUND_HALF_UP);
 					BigDecimal mandateNs = pl.getTotalEWSAreaInPlot().multiply(MIN_RESERVE_NS_PERCENTAGE).setScale(SCALE, BigDecimal.ROUND_HALF_UP);
 					BigDecimal providedNsAndCf = calculateTotalDeductedBuildupArea(pl, get5PercentSubOccupancyList());
@@ -372,7 +377,8 @@ public class ProvisionService extends FeatureProcess {
 					if (pl.getTotalEWSAreaInPlot().compareTo(mandatoryEWSBUA) >= 0) {
 						status = true;
 					} else {
-						status = false;
+						status = true;
+						isShelterFeeRequired=true;
 					}
 
 					Map<String, String> detailNsCf = new HashMap<>();
@@ -419,7 +425,19 @@ public class ProvisionService extends FeatureProcess {
 				details.put(RULE_NO, "");
 				details.put(DESCRIPTION, "Mandatory 10% of Buildup Area");
 				details.put(REQUIRED, mandatoryEWSBUA.toString());
-				details.put(PROVIDED, hasProvidevEWSWithin5Km ? PROVIDED_WITHIN_5KM : pl.getTotalEWSAreaInPlot().toString());
+				
+				String provided=null;
+				if(hasProvidevEWSWithin5Km)
+					provided=PROVIDED_WITHIN_5KM;
+				else if(isShelterFeeRequired) {
+					provided="Shelter Fee Applicable";
+					pl.getPlanInformation().setShelterFeeRequired(isShelterFeeRequired);
+				}else {
+					provided=pl.getTotalEWSAreaInPlot().toString();
+				}
+				
+//				details.put(PROVIDED, hasProvidevEWSWithin5Km ? PROVIDED_WITHIN_5KM : pl.getTotalEWSAreaInPlot().toString());
+				details.put(PROVIDED, provided);
 				details.put(STATUS, status ? Result.Accepted.getResultVal() : Result.Not_Accepted.getResultVal());
 				scrutinyDetail.getDetail().add(details);
 
