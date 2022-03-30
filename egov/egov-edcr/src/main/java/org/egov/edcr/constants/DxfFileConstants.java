@@ -648,7 +648,12 @@ public class DxfFileConstants {
 		SERVICE_TYPE.put("NEW_CONSTRUCTION", "New Construction");
 		SERVICE_TYPE.put("ALTERATION", "Alteration");
 	}
-
+	
+	//from api
+	public static String NEW_CONSTRUCTION="NEW_CONSTRUCTION";
+	public static String ALTERATION="ALTERATION";
+	public static String ALTERATION_MSG1=" (According to ODA (P&BS) Rules 2020)";
+	
 	public static Map<String, String> getServiceTypeList() {
 		return Collections.unmodifiableMap(SERVICE_TYPE);
 	}
