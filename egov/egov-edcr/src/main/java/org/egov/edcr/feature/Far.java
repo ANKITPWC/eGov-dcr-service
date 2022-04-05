@@ -399,6 +399,9 @@ public class Far extends FeatureProcess {
 			Building building = blk.getBuilding();
 			List<OccupancyTypeHelper> blockWiseOccupancyTypes = new ArrayList<>();
 			for (Occupancy occupancy : blk.getBuilding().getOccupancies()) {
+				if(occupancy.getArea().compareTo(BigDecimal.ZERO)==0 || occupancy.getBuiltUpArea().compareTo(BigDecimal.ZERO)==0) {
+					pl.addError("Invalid Occupancy Type", "Issue found while project color code, Please check color code for sub-Occupancy.");
+				}
 				if (occupancy.getTypeHelper() != null)
 					blockWiseOccupancyTypes.add(occupancy.getTypeHelper());
 			}
