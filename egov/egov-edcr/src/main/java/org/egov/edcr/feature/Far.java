@@ -399,13 +399,16 @@ public class Far extends FeatureProcess {
 			Building building = blk.getBuilding();
 			List<OccupancyTypeHelper> blockWiseOccupancyTypes = new ArrayList<>();
 			for (Occupancy occupancy : blk.getBuilding().getOccupancies()) {
-				if(occupancy.getArea().compareTo(BigDecimal.ZERO)==0 || occupancy.getBuiltUpArea().compareTo(BigDecimal.ZERO)==0) {
-					pl.addError("Invalid Occupancy Type", "Issue found while project color code, Please check color code for sub-Occupancy.");
-				}
 				if (occupancy.getTypeHelper() != null)
 					blockWiseOccupancyTypes.add(occupancy.getTypeHelper());
 			}
 			Set<OccupancyTypeHelper> setOfBlockDistinctOccupancyTypes = new HashSet<>(blockWiseOccupancyTypes);
+			
+			//multiple Sub-Occupancies not allowed in one block
+			if(setOfBlockDistinctOccupancyTypes.size()>1) {
+				pl.addError("multiple_Occupancy_Type_b_"+blk.getNumber(), "Found sub-Occupancy "+setOfBlockDistinctOccupancyTypes.stream().map(o -> o.getSubtype()!=null?o.getSubtype().getName():null).collect(Collectors.toList())+" in block "+blk.getNumber()+", You cannot use multiple Sub-Occupancies in a single building block.");
+			}
+			
 			OccupancyTypeHelper mostRestrictiveFar = getMostRestrictiveFar(setOfBlockDistinctOccupancyTypes);
 			blk.getBuilding().setMostRestrictiveFarHelper(mostRestrictiveFar);
 
