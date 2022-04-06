@@ -92,11 +92,11 @@ public class PlanService {
 		AmendmentService repo = (AmendmentService) specificRuleService.find("amendmentService");
 		Amendment amd = repo.getAmendments();
 
-		Plan plan=null;
+		Plan plan = null;
 		boolean isAborted = false;
 		try {
-			plan = extractService.extract(dcrApplication.getSavedDxfFile(), amd, asOnDate,
-					featureService.getFeatures(),dcrApplication.getThirdPartyUserTenant());
+			plan = extractService.extract(dcrApplication.getSavedDxfFile(), amd, asOnDate, featureService.getFeatures(),
+					dcrApplication.getThirdPartyUserTenant());
 			isAborted = checkAbortCaseTrue(plan);
 			if (!isAborted) {
 				plan.setApplicationType(
@@ -106,16 +106,15 @@ public class PlanService {
 				updateOdPlanInfo(plan);
 				plan.getPlanInformation().setServiceType(dcrApplication.getServiceType());
 				plan = applyRules(plan, amd, cityDetails);
-				
+
 				NocAndDocumentsUtill.updateNoc(plan);
 				NocAndDocumentsUtill.updateDocuments(plan);
 				FeeCalculationUtill.checkShelterFeePrevalidation(plan);
 				DataPreparation.updatePlanDetails(plan);
 				OdishaUtill.computeOccupancyPercentage(plan);
-				
+
 			}
-			
-			
+
 		} catch (Exception e) {
 			LOG.error(e.getMessage());
 			e.printStackTrace();
@@ -517,6 +516,27 @@ public class PlanService {
 			pl.addError("isProjectUndertakingByGovt",
 					"IS_THE_PROJECT_BY_STATE_GOVT_OR_CENTRAL_GOVT_OR_GOVT_UNDERTAKING is mandatory in plan info.");
 		}
+
+		// NUMBER_OF_TEMPORARY_STRUCTURES_IF_PRESENT_AT_THE_SITE
+
+		String numberOfTemporaryStructures = pl.getPlanInfoProperties()
+				.get(NUMBER_OF_TEMPORARY_STRUCTURES_IF_PRESENT_AT_THE_SITE);
+		if (numberOfTemporaryStructures == null) {
+			pl.addError("numberOfTemporaryStructures",
+					"NUMBER_OF_TEMPORARY_STRUCTURES_IF_PRESENT_AT_THE_SITE is mandatory in plan info.");
+		} else if (NA.equals(numberOfTemporaryStructures)) {
+			pl.getPlanInformation().setIsRetentionFeeApplicable(Boolean.FALSE);
+			pl.getPlanInformation().setNumberOfTemporaryStructures(BigDecimal.ZERO);
+		} else {
+			BigDecimal count = new BigDecimal(numberOfTemporaryStructures);
+			if (count.compareTo(BigDecimal.ZERO) > 0) {
+				pl.getPlanInformation().setIsRetentionFeeApplicable(Boolean.TRUE);
+				pl.getPlanInformation().setNumberOfTemporaryStructures(count);
+			} else {
+				pl.getPlanInformation().setIsRetentionFeeApplicable(Boolean.FALSE);
+				pl.getPlanInformation().setNumberOfTemporaryStructures(BigDecimal.ZERO);
+			}
+		}
 	}
 
 	public void savePlanDetail(Plan plan, EdcrApplicationDetail detail) {
@@ -723,7 +743,8 @@ public class PlanService {
 		AmendmentService repo = (AmendmentService) specificRuleService.find(AmendmentService.class.getSimpleName());
 		Amendment amd = repo.getAmendments();
 
-		Plan plan = extractService.extract(planFile, amd, asOnDate, featureService.getFeatures(),edcrRequest.getTenantId());
+		Plan plan = extractService.extract(planFile, amd, asOnDate, featureService.getFeatures(),
+				edcrRequest.getTenantId());
 		if (StringUtils.isNotBlank(edcrRequest.getApplicantName()))
 			plan.getPlanInformation().setApplicantName(edcrRequest.getApplicantName());
 		else
