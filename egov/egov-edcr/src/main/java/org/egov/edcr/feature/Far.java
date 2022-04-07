@@ -706,7 +706,7 @@ public class Far extends FeatureProcess {
 							flr.getNumber().toString(), occupancyTypeHelper));
 		}
 
-		if(flr.getNumber()>=0 && !DxfFileConstants.EWS.equals(occupancySubTypeHelperCode)) {
+		if(!DxfFileConstants.EWS.equals(occupancySubTypeHelperCode)) {
 			if (flr.isStiltFloor() || flr.getIsServiceFloor())
 				occupancy.setFloorArea((occupancy.getBuiltUpArea() == null ? BigDecimal.ZERO : occupancy.getBuiltUpArea())
 						.subtract(occupancy.getDeduction() == null ? BigDecimal.ZERO : occupancy.getDeduction())
