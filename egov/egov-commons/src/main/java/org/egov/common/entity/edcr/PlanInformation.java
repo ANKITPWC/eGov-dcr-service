@@ -264,9 +264,9 @@ public class PlanInformation implements Serializable {
     
     private String numberOfStoreys;
     
-    private Boolean isRetentionFeeApplicable;
+    private Boolean isRetentionFeeApplicable=Boolean.FALSE;
     
-    private BigDecimal numberOfTemporaryStructures;
+    private BigDecimal numberOfTemporaryStructures=BigDecimal.ZERO;
     
     public Boolean getGovernmentOrAidedSchool() {
         return governmentOrAidedSchool;
