@@ -47,7 +47,10 @@ public class GeneralStair extends FeatureProcess {
 		OccupancyTypeHelper occupancyTypeHelper = plan.getVirtualBuilding().getMostRestrictiveFarHelper();
 		for (Block block : plan.getBlocks()) {
 			int requiredGenralStairPerFloor =requiredGenralStairPerFloor(plan, block);
-			if(block.getBuilding().getFloors().size()>1)
+			if(block.getBuilding().getFloors().size()>1 && !(DxfFileConstants.PLOTTED_DETACHED_OR_INDIVIDUAL_RESIDENTIAL_BUILDING.equals(occupancyTypeHelper.getSubtype().getCode())
+					|| DxfFileConstants.SEMI_DETACHED.equals(occupancyTypeHelper.getSubtype().getCode())
+					|| DxfFileConstants.ROW_HOUSING.equals(occupancyTypeHelper.getSubtype().getCode())
+					))
 				requiredGenralStairPerFloor = 1 +requiredGenralStairPerFloor;
 			for (Floor floor : block.getBuilding().getFloors()) {
 				boolean flageForStair2=false;
