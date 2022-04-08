@@ -825,4 +825,15 @@ public class OdishaUtill {
 		
 		return flage;
 	}
+	
+	public static void additionalValidation(Plan pl) {
+		BigDecimal buildupArea=pl.getVirtualBuilding().getTotalBuitUpArea();
+		
+		if(buildupArea.compareTo(new BigDecimal("500"))>0) {
+			if(pl.getPlanInformation().getProjectValueForEIDP()==null || pl.getPlanInformation().getProjectValueForEIDP().compareTo(BigDecimal.ZERO)<=0) {
+				pl.addError("projectValueForEIDP500",
+						"Project value is mandatory for project with more than 500 BuitUpArea.");
+			}
+		}
+	}
 }

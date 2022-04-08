@@ -109,6 +109,7 @@ public class Coverage extends FeatureProcess {
 						"Coverage Area for block " + block.getNumber() + " not Provided");
 			}
 		}
+		OdishaUtill.additionalValidation(pl);
 		return pl;
 	}
 
