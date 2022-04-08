@@ -144,6 +144,7 @@ public class RestEdcrApplicationController {
     @ResponseBody
     public ResponseEntity<?> scrutinizePlan(@RequestBody MultipartFile planFile,
             @RequestParam String edcrRequest) {
+    	LOGGER.info("edcrRequest : "+edcrRequest);
         EdcrDetail edcrDetail = new EdcrDetail();
         EdcrRequest edcr = new EdcrRequest();
         boolean isValid = isValidJson(edcrRequest);
@@ -176,6 +177,7 @@ public class RestEdcrApplicationController {
     @ResponseBody
     public ResponseEntity<?> scrutinizeOccupancyPlan(@RequestBody MultipartFile planFile,
             @RequestParam String edcrRequest) {
+    	LOGGER.info("edcrRequest : "+edcrRequest);
         EdcrDetail edcrDetail = new EdcrDetail();
         EdcrRequest edcr = new EdcrRequest();
         boolean isValid = isValidJson(edcrRequest);
@@ -213,6 +215,7 @@ public class RestEdcrApplicationController {
     public ResponseEntity<?> scrutinize(@RequestPart("planFile") MultipartFile planFile,
             @RequestParam("edcrRequest") String edcrRequest, final HttpServletRequest request) {
         String userInfo = request.getHeader(USER_INFO_HEADER_NAME);
+        LOGGER.info("edcrRequest : "+edcrRequest);
         LOGGER.info("###User Info####"+userInfo);
         EdcrDetail edcrDetail = new EdcrDetail();
         EdcrRequest edcr = new EdcrRequest();
