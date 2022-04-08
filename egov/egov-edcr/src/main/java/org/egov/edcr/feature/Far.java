@@ -1250,7 +1250,8 @@ public class Far extends FeatureProcess {
 			if (buildingHeight.compareTo(new BigDecimal("10")) > 0
 					|| pl.getPlot().getArea().compareTo(new BigDecimal("115")) > 0) {
 				generalCriteriasFar(pl.getFarDetails(), roadWidth);
-				pl.getFarDetails().setPermissableFar(pl.getFarDetails().getPermissableFar() + 0.25);
+//				pl.getFarDetails().setPermissableFar(pl.getFarDetails().getPermissableFar() + 0.25);
+				pl.getFarDetails().setPermissableFar(pl.getFarDetails().getPermissableFar());
 			}
 
 		} else if (DxfFileConstants.FARM_HOUSE.equals(occupancyTypeHelper.getSubtype().getCode())
