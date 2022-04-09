@@ -424,8 +424,8 @@ public class EdcrRestService {
         UserInfo userInfo = reqInfoWrapper.getRequestInfo() == null ? null
                 : reqInfoWrapper.getRequestInfo().getUserInfo();
         String userId = "";
-        if (userInfo != null && StringUtils.isNoneBlank(userInfo.getUuid()))
-            userId = userInfo.getUuid();
+        if (userInfo != null && StringUtils.isNoneBlank(userInfo.getId()))
+            userId = userInfo.getId();
         else if (userInfo != null && StringUtils.isNoneBlank(userInfo.getId()))
             userId = userInfo.getId();
         // When the user is ANONYMOUS, then search application by edcrno or transaction
@@ -743,7 +743,7 @@ public class EdcrRestService {
             return new ErrorDetail(BPA_07, REQ_BODY_REQUIRED);
         else if (edcrRequest.getRequestInfo().getUserInfo() == null
                 || (edcrRequest.getRequestInfo().getUserInfo() != null
-                        && isBlank(edcrRequest.getRequestInfo().getUserInfo().getUuid())))
+                        && isBlank(edcrRequest.getRequestInfo().getUserInfo().getId())))
             return new ErrorDetail(BPA_07, USER_ID_IS_MANDATORY);
 
         if (isBlank(edcrRequest.getTransactionNumber()))
@@ -761,7 +761,7 @@ public class EdcrRestService {
             return new ErrorDetail(BPA_07, REQ_BODY_REQUIRED);
         else if (edcrRequest.getRequestInfo().getUserInfo() == null
                 || (edcrRequest.getRequestInfo().getUserInfo() != null
-                        && isBlank(edcrRequest.getRequestInfo().getUserInfo().getUuid())))
+                        && isBlank(edcrRequest.getRequestInfo().getUserInfo().getId())))
             return new ErrorDetail(BPA_07, USER_ID_IS_MANDATORY);
 
         if (isBlank(edcrRequest.getTransactionNumber()))
@@ -785,7 +785,7 @@ public class EdcrRestService {
             errorDetails.add(new ErrorDetail(BPA_07, REQ_BODY_REQUIRED));
         else if (edcrRequest.getRequestInfo().getUserInfo() == null
                 || (edcrRequest.getRequestInfo().getUserInfo() != null
-                        && isBlank(edcrRequest.getRequestInfo().getUserInfo().getUuid())))
+                        && isBlank(edcrRequest.getRequestInfo().getUserInfo().getId())))
             errorDetails.add(new ErrorDetail("BPA-08", USER_ID_IS_MANDATORY));
 
         if (isBlank(edcrRequest.getTransactionNumber()))
