@@ -302,6 +302,7 @@ public class RestEdcrApplicationController {
     @ResponseBody
     public ResponseEntity<?> scrutinyDetails(@ModelAttribute EdcrRequest edcrRequest,
             @RequestBody @Valid RequestInfoWrapper requestInfoWrapper) {
+    	System.out.println("/scrutinydetails -->  getTenantID"+ApplicationThreadLocals.getTenantID() );
         ErrorDetail edcReqRes = edcrValidator.validate(edcrRequest);
         if (edcReqRes != null && StringUtils.isNotBlank(edcReqRes.getErrorMessage()))
             return new ResponseEntity<>(edcReqRes, HttpStatus.BAD_REQUEST);
