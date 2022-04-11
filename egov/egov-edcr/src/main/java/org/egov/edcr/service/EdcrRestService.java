@@ -201,36 +201,36 @@ public class EdcrRestService {
         edcrApplication.setDxfFile(file);
        
         if (edcrRequest.getRequestInfo() != null && edcrRequest.getRequestInfo().getUserInfo() != null) {
-//            edcrApplication.setThirdPartyUserCode(isNotBlank(edcrRequest.getRequestInfo().getUserInfo().getUuid())
-//                    ? edcrRequest.getRequestInfo().getUserInfo().getUuid()
-//                    : edcrRequest.getRequestInfo().getUserInfo().getId());
-//            String tenantId = "";
-//            if (StringUtils.isNotBlank(edcrRequest.getTenantId())) {
-//                String[] tenantArr = edcrRequest.getTenantId().split("\\.");
-//                String tenantFromReq;
-//                if (tenantArr.length == 1)
-//                    tenantFromReq = tenantArr[0];
-//                else
-//                    tenantFromReq = tenantArr[1];
-//                if (tenantFromReq.equalsIgnoreCase(ApplicationThreadLocals.getTenantID()))
-//                    tenantId = edcrRequest.getTenantId();
-//            }
-//
-//            if (StringUtils.isBlank(tenantId) && edcrRequest.getRequestInfo() != null
-//                    && edcrRequest.getRequestInfo().getUserInfo() != null
-//                    && StringUtils.isNotBlank(edcrRequest.getRequestInfo().getUserInfo().getTenantId())) {
-//                tenantId = edcrRequest.getRequestInfo().getUserInfo().getTenantId();
-//            } else if (StringUtils.isBlank(tenantId)) {
-//                tenantId = ApplicationThreadLocals.getTenantID();
-//            }
-//            edcrApplication.setThirdPartyUserTenant(tenantId);
-        	 edcrApplication.setThirdPartyUserCode(isNotBlank(edcrRequest.getRequestInfo().getUserInfo().getId()) ?	
-                     edcrRequest.getRequestInfo().getUserInfo().getId() :	
-                     StringUtils.EMPTY);	
-                 edcrApplication	
-                     .setThirdPartyUserTenant(StringUtils.isNotBlank(edcrRequest.getTenantId()) ?	
-                         edcrRequest.getTenantId() :	
-                         edcrRequest.getRequestInfo().getUserInfo().getTenantId());
+            edcrApplication.setThirdPartyUserCode(isNotBlank(edcrRequest.getRequestInfo().getUserInfo().getUuid())
+                    ? edcrRequest.getRequestInfo().getUserInfo().getUuid()
+                    : edcrRequest.getRequestInfo().getUserInfo().getId());
+            String tenantId = "";
+            if (StringUtils.isNotBlank(edcrRequest.getTenantId())) {
+                String[] tenantArr = edcrRequest.getTenantId().split("\\.");
+                String tenantFromReq;
+                if (tenantArr.length == 1)
+                    tenantFromReq = tenantArr[0];
+                else
+                    tenantFromReq = tenantArr[1];
+                if (tenantFromReq.equalsIgnoreCase(ApplicationThreadLocals.getTenantID()))
+                    tenantId = edcrRequest.getTenantId();
+            }
+
+            if (StringUtils.isBlank(tenantId) && edcrRequest.getRequestInfo() != null
+                    && edcrRequest.getRequestInfo().getUserInfo() != null
+                    && StringUtils.isNotBlank(edcrRequest.getRequestInfo().getUserInfo().getTenantId())) {
+                tenantId = edcrRequest.getRequestInfo().getUserInfo().getTenantId();
+            } else if (StringUtils.isBlank(tenantId)) {
+                tenantId = ApplicationThreadLocals.getTenantID();
+            }
+            edcrApplication.setThirdPartyUserTenant(tenantId);
+//        	 edcrApplication.setThirdPartyUserCode(isNotBlank(edcrRequest.getRequestInfo().getUserInfo().getId()) ?	
+//                     edcrRequest.getRequestInfo().getUserInfo().getId() :	
+//                     StringUtils.EMPTY);	
+//                 edcrApplication	
+//                     .setThirdPartyUserTenant(StringUtils.isNotBlank(edcrRequest.getTenantId()) ?	
+//                         edcrRequest.getTenantId() :	
+//                         edcrRequest.getRequestInfo().getUserInfo().getTenantId());
         }
 
         edcrApplication = edcrApplicationService.createRestEdcr(edcrApplication);
