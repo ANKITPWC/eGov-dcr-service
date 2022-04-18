@@ -80,6 +80,7 @@ public class MultiTenantSchemaConnectionProvider implements MultiTenantConnectio
     @Override
     public Connection getConnection(String tenantId) {
         try {
+        	LOG.info("getConnection :: tenantId -> "+tenantId);
             Connection connection = getAnyConnection();
             connection.setSchema(tenantId);
             return connection;
@@ -95,6 +96,7 @@ public class MultiTenantSchemaConnectionProvider implements MultiTenantConnectio
     @Override
     public void releaseConnection(String tenantId, Connection connection) {
         try {
+        	LOG.info("releaseConnection :: tenantId -> "+tenantId);
             connection.setSchema(tenantId);
             releaseAnyConnection(connection);
         } catch (SQLException e) {

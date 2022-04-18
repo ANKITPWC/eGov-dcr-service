@@ -122,10 +122,9 @@ public class ApplicationCoreFilter implements Filter {
     }
 
     private void prepareRestService(HttpServletRequest req, HttpSession session) {
-        String requestURL = new StringBuilder().append(ApplicationThreadLocals.getDomainURL())
-                .append(req.getRequestURI()).toString();
-        if (requestURL.contains(ApplicationTenantResolverFilter.tenants.get("state"))
-                && (requestURL.contains("/rest/") || requestURL.contains("/oauth/"))) {
+
+        if (req.getRequestURL().toString().contains(ApplicationTenantResolverFilter.tenants.get("state"))
+                && (req.getRequestURL().toString().contains("/rest/") || req.getRequestURL().toString().contains("/oauth/"))) {
             prepareThreadLocal(ApplicationThreadLocals.getTenantID());
 
         }
