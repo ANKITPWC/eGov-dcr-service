@@ -169,17 +169,18 @@ public class ApplicationTenantResolverFilter implements Filter {
                 ApplicationThreadLocals.setTenantID("state");
                 found = true;
             } else {
-                for (String city : tenants.keySet()) {
-                    LOG.info("Key :" + city + " ,Value :" + tenants.get(city) + "request tenant" + tenant);
-
-                    if (tenants.get(city).contains(tenant)) {
-                        ApplicationThreadLocals.setTenantID(city);
-                        found = true;
-                        break;
-                    } else {
-
-                    }
-                }
+//                for (String city : tenants.keySet()) {
+//                    LOG.info("Key :" + city + " ,Value :" + tenants.get(city) + "request tenant" + tenant);
+//
+//                    if (tenants.get(city).contains(tenant)) {
+//                        ApplicationThreadLocals.setTenantID(city);
+//                        found = true;
+//                        break;
+//                    } else {
+//
+//                    }
+//                }
+            	 ApplicationThreadLocals.setTenantID("generic");
             }
             if (!found) {
                 throw new ApplicationRestException("invalid_tenant", "Invalid Tenant Id: " + tenant);
