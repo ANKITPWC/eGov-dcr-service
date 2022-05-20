@@ -789,4 +789,10 @@ public class DxfFileConstants {
 	public static final String SHORTENED_SCRUTINY_REPORT = "shortenedReport";
 	
 	public static final String ADDITIONAL_TDR_IF_APPLICABLE_M2="ADDITIONAL_TDR_IF_APPLICABLE_M2";
+	
+	
+	//Revised
+	public static final String EXISTING_PERMIT_ORDER_NUMBER="EXISTING_PERMIT_ORDER_NUMBER";
+	public static final String EXISTING_PERMIT_ORDER_DATE="EXISTING_PERMIT_ORDER_DATE";
+	public static final String EXISTING_PERMIT_ORDER_EXPIRY_DATE="EXISTING_PERMIT_ORDER_EXPIRY_DATE";
 }

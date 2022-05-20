@@ -82,6 +82,8 @@ public class EdcrRequest {
     private String applicationSubType;
 
     private String comparisonEdcrNumber;
+    
+    private String otherApplicationSubType;
 
     public RequestInfo getRequestInfo() {
         return requestInfo;
@@ -170,5 +172,13 @@ public class EdcrRequest {
     public void setComparisonEdcrNumber(String comparisonEdcrNumber) {
         this.comparisonEdcrNumber = comparisonEdcrNumber;
     }
+
+	public String getOtherApplicationSubType() {
+		return otherApplicationSubType;
+	}
+
+	public void setOtherApplicationSubType(String otherApplicationSubType) {
+		this.otherApplicationSubType = otherApplicationSubType;
+	}
 
 }

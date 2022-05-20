@@ -31,6 +31,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.egov.common.entity.ApplicationSubType;
 import org.egov.common.entity.edcr.EdcrPdfDetail;
 import org.egov.common.entity.edcr.OccupancyTypeHelper;
 import org.egov.common.entity.edcr.Plan;
@@ -118,6 +119,7 @@ public class PlanService {
 			if (!isAborted) {
 				plan.setApplicationType(
 						org.egov.common.entity.ApplicationType.valueOf(dcrApplication.getApplicationType().name()));
+				plan.setApplicationSubType(ApplicationSubType.valueOf(dcrApplication.getApplicationSubType().name()));
 				plan.setMdmsMasterData(dcrApplication.getMdmsMasterData());
 				plan.setThirdPartyUserTenantld(dcrApplication.getThirdPartyUserTenant());
 				// plan.getErrors().clear();
@@ -588,6 +590,24 @@ public class PlanService {
 				pl.getPlanInformation().setAdditionalTdr(count);
 			}
 		}
+		
+		
+		//Revised
+		if(pl.getApplicationSubType()!=null && ApplicationSubType.REVISE.equals(pl.getApplicationSubType())) {
+			//EXISTING_PERMIT_ORDER_NUMBER=NA/ PERMIT NO.
+			String existingPermitOrderNumber=pl.getPlanInfoProperties().get(EXISTING_PERMIT_ORDER_NUMBER);
+			if(existingPermitOrderNumber==null || NA.equalsIgnoreCase(existingPermitOrderNumber)) {
+				pl.addError(EXISTING_PERMIT_ORDER_NUMBER, "EXISTING_PERMIT_ORDER_NUMBER is mandatory in plan info.");
+			}else {
+				pl.getPlanInformation().setExistingPermitOrderNumber(existingPermitOrderNumber);
+			}
+			
+			//EXISTING_PERMIT_ORDER_DATE=NA/DATE: DD-MM-YYYY (For e.g. 14-01-2022)
+			
+			
+			//EXISTING_PERMIT_ORDER_EXPIRY_DATE=NA/DATE: DD-MM-YYYY (For e.g. 14-01-2025)
+		}
+		
 	}
 	
 

@@ -60,6 +60,7 @@ import java.util.Map;
 
 import javax.persistence.Transient;
 
+import org.egov.common.entity.ApplicationSubType;
 import org.egov.common.entity.ApplicationType;
 import org.egov.common.entity.bpa.SubOccupancy;
 import org.egov.common.entity.bpa.Usage;
@@ -88,6 +89,7 @@ public class Plan implements Serializable {
 	 */
 	private Date asOnDate;
 	private ApplicationType applicationType;
+	private ApplicationSubType applicationSubType;
 	/**
 	 * Planinformation captures the declarations of the plan.Plan information
 	 * captures the boundary, building location details,surrounding building NOC's
@@ -747,7 +749,14 @@ public class Plan implements Serializable {
 	public void setApplicationType(ApplicationType applicationType) {
 		this.applicationType = applicationType;
 	}
-	
+
+	public ApplicationSubType getApplicationSubType() {
+		return applicationSubType;
+	}
+
+	public void setApplicationSubType(ApplicationSubType applicationSubType) {
+		this.applicationSubType = applicationSubType;
+	}
 	
 	
 }

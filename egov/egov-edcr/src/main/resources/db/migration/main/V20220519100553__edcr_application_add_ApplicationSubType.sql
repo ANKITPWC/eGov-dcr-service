@@ -1,0 +1,1 @@
+ALTER TABLE EDCR_APPLICATION ADD COLUMN applicationSubType varchar;

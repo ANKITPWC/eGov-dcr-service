@@ -272,6 +272,8 @@ public class PlanInformation implements Serializable {
     
     private BigDecimal additionalTdr;
     
+    private String existingPermitOrderNumber;
+    
     public Boolean getGovernmentOrAidedSchool() {
         return governmentOrAidedSchool;
     }
@@ -1102,6 +1104,14 @@ public class PlanInformation implements Serializable {
 
 	public void setAdditionalTdr(BigDecimal additionalTdr) {
 		this.additionalTdr = additionalTdr;
+	}
+
+	public String getExistingPermitOrderNumber() {
+		return existingPermitOrderNumber;
+	}
+
+	public void setExistingPermitOrderNumber(String existingPermitOrderNumber) {
+		this.existingPermitOrderNumber = existingPermitOrderNumber;
 	}
 
 	

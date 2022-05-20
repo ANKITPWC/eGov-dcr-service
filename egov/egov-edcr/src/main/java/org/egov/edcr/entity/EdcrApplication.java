@@ -97,6 +97,9 @@ public class EdcrApplication extends AbstractAuditable {
     private String architectInformation;
 
     private String projectType;
+    
+    @Enumerated(EnumType.STRING)
+    private ApplicationSubType applicationSubType;
 
     private transient String permitDateTemp;
 
@@ -306,4 +309,12 @@ public class EdcrApplication extends AbstractAuditable {
         this.deviationStatus = deviationStatus;
     }
 
+	public ApplicationSubType getApplicationSubType() {
+		return applicationSubType;
+	}
+
+	public void setApplicationSubType(ApplicationSubType applicationSubType) {
+		this.applicationSubType = applicationSubType;
+	}
+    
 }

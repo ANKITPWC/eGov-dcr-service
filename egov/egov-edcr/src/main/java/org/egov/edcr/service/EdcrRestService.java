@@ -74,6 +74,7 @@ import org.egov.edcr.config.properties.EdcrApplicationSettings;
 import org.egov.edcr.constants.DxfFileConstants;
 import org.egov.edcr.contract.EdcrDetail;
 import org.egov.edcr.contract.EdcrRequest;
+import org.egov.edcr.entity.ApplicationSubType;
 import org.egov.edcr.entity.ApplicationType;
 import org.egov.edcr.entity.EdcrApplication;
 import org.egov.edcr.entity.EdcrApplicationDetail;
@@ -204,7 +205,10 @@ public class EdcrRestService {
                             ? edcrRequest.getTenantId()
                             : edcrRequest.getRequestInfo().getUserInfo().getTenantId());
         }
-
+        
+        if(edcrRequest.getOtherApplicationSubType()!=null)
+        	edcrApplication.setApplicationSubType(ApplicationSubType.valueOf(edcrRequest.getOtherApplicationSubType()));
+        
         edcrApplication = edcrApplicationService.createRestEdcr(edcrApplication);
         return setEdcrResponse(edcrApplication.getEdcrApplicationDetails().get(0), edcrRequest);
     }
