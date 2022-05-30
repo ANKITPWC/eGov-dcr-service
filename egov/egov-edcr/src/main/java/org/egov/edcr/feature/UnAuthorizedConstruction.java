@@ -48,76 +48,46 @@
 package org.egov.edcr.feature;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.egov.common.entity.edcr.Block;
+import org.egov.common.entity.edcr.Floor;
 import org.egov.common.entity.edcr.Plan;
-import org.egov.common.entity.edcr.ScrutinyDetail;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.stereotype.Service;
 
-public abstract class FeatureProcess {
+@Service
+public class UnAuthorizedConstruction extends FeatureProcess {
 
-	protected ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
-	public static final String STATUS = "Status";
-	public static final String PROVIDED = "Provided";
-	public static final String LEVEL = "Level";
-	public static final String OCCUPANCY = "Occupancy";
-	public static final String FIELDVERIFIED = "Field Verified";
-	public static final String REQUIRED = "Required";
-	public static final String PERMITTED = "Permitted";
-	public static final String PERMISSIBLE = "Permissible";
-	public static final String MAX_PERMISSIBLE = "Max Permissible";
-	public static final String DESCRIPTION = "Description";
-	public static final String RULE_NO = "Byelaw";
-	public static final String DISTANCE = "Distance";
-	public static final String VERIFIED = "Verified";
-	public static final String ACTION = "Action";
-	public static final String AREA_TYPE = "Area Type";
-	public static final String ROAD_WIDTH = "Road Width";
-	public static final String BASE_FAR="Base Far";
-	public static final String FLOOR="Floor";
-	public static final String ROOM="ROOM";
-	public static final String TYPE="TYPE";
-	public static final String BLOCK="Block";
-	public static final String EXISTING_AREA="Existing Area";
-	public static final String APPROVED_AREA="Approved Area";
-	
+	private static final String UNAUTHORIZED_CONSTRUCTION_MSG = "Unauthorised area found in drawing, kindly regularise the area before applying for building permit - addition and alteration service.";
 
-	public abstract Map<String, Date> getAmendments();
-
-	public abstract Plan validate(Plan pl);
-
-	public abstract Plan process(Plan pl);
-
-	@Autowired
-	@Qualifier("parentMessageSource")
-	protected MessageSource edcrMessageSource;
-
-	public MessageSource getEdcrMessageSource() {
-		return edcrMessageSource;
-	}
-
-	public void setEdcrMessageSource(MessageSource edcrMessageSource) {
-		this.edcrMessageSource = edcrMessageSource;
-	}
-
-	public String getLocaleMessage(String code, String... args) {
-		return edcrMessageSource.getMessage(code, args, LocaleContextHolder.getLocale());
-
-	}
-
-	public String getAmendmentsRefNumber(Date applicationDate) {
-		String refNumber = "";
-		Map<String, Date> amendments = getAmendments();
-		for (String key : amendments.keySet()) {
-			if (applicationDate != null && applicationDate.compareTo(amendments.get(key)) >= 0) {
-				refNumber = key;
+	@Override
+	public Plan validate(Plan pl) {
+		boolean isUnauthorizedConstructionPersent = false;
+		for (Block block : pl.getBlocks()) {
+			for (Floor floor : block.getBuilding().getFloors()) {
+				if (!floor.getUnauthorizedConstruction().isEmpty()) {
+					isUnauthorizedConstructionPersent = true;
+					break;
+				}
+				if (isUnauthorizedConstructionPersent)
+					break;
 			}
 		}
-
-		return refNumber;
+		if (isUnauthorizedConstructionPersent) {
+			pl.addError("UnauthorizedConstructionPersent", UNAUTHORIZED_CONSTRUCTION_MSG);
+		}
+		return pl;
 	}
 
+	@Override
+	public Plan process(Plan pl) {
+		validate(pl);
+		return pl;
+	}
+
+	@Override
+	public Map<String, Date> getAmendments() {
+		return new LinkedHashMap<>();
+	}
 }
