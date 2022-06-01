@@ -18,6 +18,7 @@ import org.egov.common.entity.edcr.Plan;
 import org.egov.common.entity.edcr.Result;
 import org.egov.common.entity.edcr.Room;
 import org.egov.common.entity.edcr.ScrutinyDetail;
+import org.egov.common.entity.edcr.TypicalFloor;
 import org.egov.edcr.constants.DxfFileConstants;
 import org.egov.edcr.od.OdishaUtill;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,8 @@ public class DoorWays extends FeatureProcess {
 
 	@Override
 	public Plan process(Plan pl) {
+		addTypicalFloor(pl);
+		String serviceType = pl.getPlanInformation().getServiceType();
 		for (Block b : pl.getBlocks()) {
 			ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
 			scrutinyDetail.setKey("Block_" + b.getNumber() + "_" + "Doorways");
@@ -59,7 +62,7 @@ public class DoorWays extends FeatureProcess {
 				Map<Integer, List<BigDecimal>> doorWays = getDoors(floor.getDoors());
 
 				// GeneralDoorways
-				boolean isGeneralDoorwaysRequired = true;
+				boolean isGeneralDoorwaysRequired = isGeneralDoorwaysRequired(pl, floor, serviceType);
 
 				if (isGeneralDoorwaysRequired) {
 					List<BigDecimal> genralDoorways = doorWays.get(GENERAL_DOOR_COLOR_CODE);
@@ -221,5 +224,33 @@ public class DoorWays extends FeatureProcess {
 		details.put(PROVIDED, actual);
 		details.put(STATUS, status);
 		scrutinyDetail.getDetail().add(details);
+	}
+
+	public void addTypicalFloor(Plan pl) {
+		for (Block block : pl.getBlocks()) {
+			for (Floor floor : block.getBuilding().getFloors()) {
+				for (TypicalFloor tp : block.getTypicalFloor()) {
+					if (tp.getRepetitiveFloorNos().contains(floor.getNumber()))
+						for (Floor allFloors : block.getBuilding().getFloors())
+							if (allFloors.getNumber().equals(tp.getModelFloorNo()) && !allFloors.getDoors().isEmpty()) {
+								floor.setDoors(allFloors.getDoors());
+								break;
+							}
+				}
+			}
+		}
+	}
+	
+	private boolean isGeneralDoorwaysRequired(Plan pl,Floor floor,String serviceType) {
+		boolean isGeneralDoorwaysRequired = true;
+		if (DxfFileConstants.ALTERATION.equals(serviceType)) {
+			isGeneralDoorwaysRequired = false;
+			BigDecimal totalBuildUpArea = floor.getOccupancies().stream().map( oc -> oc.getBuiltUpArea()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO); 
+			BigDecimal totalExistingArea = floor.getOccupancies().stream().map( oc -> oc.getExistingBuiltUpArea()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+			BigDecimal totalPropusedArea= totalBuildUpArea.subtract(totalExistingArea).setScale(2,BigDecimal.ROUND_HALF_UP);
+			if(totalPropusedArea.compareTo(BigDecimal.ZERO)>0)
+				isGeneralDoorwaysRequired = true;
+		}
+		return isGeneralDoorwaysRequired;
 	}
 }

@@ -753,7 +753,7 @@ public class DxfFileConstants {
 	public static final String BPA_PO_MODULE_CODE = "BPA2";
 	public static final String BPA_PM_MODULE_CODE = "BPA3";
 	public static final String BPA_DP_BP_MODULE_CODE = "BPA4";
-	
+	public static final String BPA_APPROVAL_BY_AN_ACCREDITED_PERSON="BPA5";
 	
 	public static final String BPA_OC_PA_MODULE_CODE = "BPA_OC1";
 	public static final String BPA_OC_PO_MODULE_CODE = "BPA_OC2";
@@ -785,4 +785,9 @@ public class DxfFileConstants {
 	public static final String PROJECT_VALUE_IN_INR_IF_EIDP_FEE_IS_APPLICABLE_FOR_PROJECT="PROJECT_VALUE_IN_INR_IF_EIDP_FEE_IS_APPLICABLE_FOR_PROJECT";
 	public static final String IS_THE_PROJECT_BY_STATE_GOVT_OR_CENTRAL_GOVT_OR_GOVT_UNDERTAKING="IS_THE_PROJECT_BY_STATE_GOVT_OR_CENTRAL_GOVT_OR_GOVT_UNDERTAKING";
 	public static final String NUMBER_OF_TEMPORARY_STRUCTURES_IF_PRESENT_AT_THE_SITE="NUMBER_OF_TEMPORARY_STRUCTURES_IF_PRESENT_AT_THE_SITE";
+	
+	public static final String SHORTENED_SCRUTINY_REPORT = "shortenedReport";
+	
+	public static final String ADDITIONAL_TDR_IF_APPLICABLE_M2="ADDITIONAL_TDR_IF_APPLICABLE_M2";
+	public static final String FEATURE_RESTRICTED_AREA = "Restricted area";
 }

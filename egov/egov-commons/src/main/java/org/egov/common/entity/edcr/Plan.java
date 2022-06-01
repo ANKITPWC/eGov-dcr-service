@@ -195,6 +195,9 @@ public class Plan implements Serializable {
 	@Transient
 	private Boolean strictlyValidateDimension = false;
 
+	@Transient
+	private Boolean strictlyValidateBldgHeightDimension = false;
+
 	private Gate gate;
 
 	// Used to show drawing mistakes, General errors, mistakes in following
@@ -226,6 +229,9 @@ public class Plan implements Serializable {
 	private List<ICT> icts = new ArrayList<>();
 	
 	private Ammenity ammenity;
+	
+	//AffectedLandArea area in plot
+	private  List<AffectedLandArea> affectedLandAreas=new ArrayList<>();
 	
 	public List<BigDecimal> getCanopyDistanceFromPlotBoundary() {
 		return canopyDistanceFromPlotBoundary;
@@ -634,6 +640,14 @@ public class Plan implements Serializable {
 		this.strictlyValidateDimension = strictlyValidateDimension;
 	}
 
+	public Boolean getStrictlyValidateBldgHeightDimension() {
+		return strictlyValidateBldgHeightDimension;
+	}
+
+	public void setStrictlyValidateBldgHeightDimension(Boolean strictlyValidateBldgHeightDimension) {
+		this.strictlyValidateBldgHeightDimension = strictlyValidateBldgHeightDimension;
+	}
+
 	public HashMap<String, String> getFeatureAmendments() {
 		return featureAmendments;
 	}
@@ -736,7 +750,15 @@ public class Plan implements Serializable {
 	public void setApplicationType(ApplicationType applicationType) {
 		this.applicationType = applicationType;
 	}
-	
+
+	public List<AffectedLandArea> getAffectedLandAreas() {
+		return affectedLandAreas;
+	}
+
+	public void setAffectedLandAreas(List<AffectedLandArea> affectedLandAreas) {
+		this.affectedLandAreas = affectedLandAreas;
+	}
+
 	
 	
 }

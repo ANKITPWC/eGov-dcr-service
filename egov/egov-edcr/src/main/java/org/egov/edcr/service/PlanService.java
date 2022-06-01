@@ -87,6 +87,8 @@ public class PlanService {
 	private OcComparisonService ocComparisonService;
 	@Autowired
 	private OcComparisonDetailService ocComparisonDetailService;
+	@Autowired
+	private ShortenedReportService shortenedReportService;
 
 	public Plan process(EdcrApplication dcrApplication, String applicationType) {
 		Map<String, String> cityDetails = specificRuleService.getCityDetails();
@@ -567,7 +569,27 @@ public class PlanService {
 				pl.getPlanInformation().setNumberOfTemporaryStructures(BigDecimal.ZERO);
 			}
 		}
+		
+		//ADDITIONAL_TDR_IF_APPLICABLE
+		String additionalTdr=pl.getPlanInfoProperties()
+				.get(ADDITIONAL_TDR_IF_APPLICABLE_M2);
+		if(additionalTdr==null) {
+			pl.addError(ADDITIONAL_TDR_IF_APPLICABLE_M2, "ADDITIONAL_TDR_IF_APPLICABLE_M2 is mandatory in plan info.");
+		}else if(NA.equals(additionalTdr)) {
+			pl.getPlanInformation().setAdditionalTdr(BigDecimal.ZERO);
+		}else {
+			BigDecimal count = BigDecimal.ZERO;
+			try {
+				count = new BigDecimal(additionalTdr);
+			}catch (Exception e) {
+				pl.addError(ADDITIONAL_TDR_IF_APPLICABLE_M2, "ADDITIONAL_TDR_IF_APPLICABLE_M2 value is not accepted.");
+			}
+			if (count.compareTo(BigDecimal.ZERO) > 0) {
+				pl.getPlanInformation().setAdditionalTdr(count);
+			}
+		}
 	}
+	
 
 	public void savePlanDetail(Plan plan, EdcrApplicationDetail detail) {
 
@@ -758,6 +780,8 @@ public class PlanService {
 			}
 			edcrApplicationDetail.setCreatedDate(new Date());
 			edcrApplicationDetail.setReportOutputId(reportOutput);
+			if (plan.getEdcrPassed())
+				edcrApplicationDetail.setShortenedreportOutputId(generateShortenedReport(plan, edcrApplication));
 			List<EdcrApplicationDetail> edcrApplicationDetails = new ArrayList<>();
 			edcrApplicationDetails.add(edcrApplicationDetail);
 			savePlanDetail(plan, edcrApplicationDetail);
@@ -850,5 +874,20 @@ public class PlanService {
 		} catch (IOException e) {
 			throw new ValidationException(Arrays.asList(new ValidationError("error", e.getMessage())));
 		}
+	}
+	
+	public FileStoreMapper generateShortenedReport(Plan plan, EdcrApplication dcrApplication) {
+		try {
+			InputStream reportOutputStream=shortenedReportService.generateReport(plan, dcrApplication);
+			final String fileName = dcrApplication.getApplicationNumber() + "-"+DxfFileConstants.SHORTENED_SCRUTINY_REPORT + ".pdf";
+
+			final FileStoreMapper fileStoreMapper = fileStoreService.store(reportOutputStream, fileName, "application/pdf",
+					DcrConstants.FILESTORE_MODULECODE);
+			
+			return fileStoreMapper;
+		}catch (Exception e) {
+			LOG.error("while genrating shortened report", e);
+		}
+		return null;
 	}
 }
