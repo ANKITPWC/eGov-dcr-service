@@ -2,7 +2,6 @@ package org.egov.edcr.service;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -13,7 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.logging.Log;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.egov.common.entity.edcr.AdditionalReportDetail;
 import org.egov.common.entity.edcr.Block;
@@ -23,11 +22,14 @@ import org.egov.common.entity.edcr.DcrReportFloorDetail;
 import org.egov.common.entity.edcr.Floor;
 import org.egov.common.entity.edcr.Occupancy;
 import org.egov.common.entity.edcr.Plan;
+import org.egov.edcr.config.properties.EdcrApplicationSettings;
 import org.egov.edcr.constants.DxfFileConstants;
 import org.egov.edcr.feature.AdditionalFeature;
+import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.microservice.models.RequestInfo;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.CollectionUtils;
 
 import com.itextpdf.text.BadElementException;
@@ -77,14 +79,41 @@ public abstract class PermitOrderService {
 	public static final String STATUS = "Status";
 
 	public abstract InputStream generateReport(Plan plan, LinkedHashMap bpaApplication, RequestInfo requestInfo);
+	@Autowired
+	private EdcrApplicationSettings edcrApplicationSettings;
+	
+	public static String image_logo;
+	public Image logo = null;
+	{
+		try {
+			ClassPathResource resource = new ClassPathResource("logo_base64.txt");
+			InputStream inputStream = resource.getInputStream();
+			//InputStream is = classloader.getResourceAsStream("logo_base64.txt");
+			//FileInputStream fis = new FileInputStream("classpath:config/logo_base64.txt");
+			String stringTooLong = IOUtils.toString(inputStream, "UTF-8");
+			byte[] b = org.apache.commons.codec.binary.Base64.decodeBase64(stringTooLong);
+			logo = Image.getInstance(b);
+			logo.scaleToFit(90, 90);
+			logo.setAlignment(Image.MIDDLE);
+			logo.setAlignment(Image.TOP);
+			logo.setAlignment(Image.ALIGN_JUSTIFIED);
+		} catch (Exception e) {
+			throw new ApplicationRuntimeException("Error while loding logo", e);
+		}
+	}
 
-	public Image getLogo(String imageUrl) throws Exception {
-		Image logo1 = Image.getInstance(new URL(imageUrl));
-		logo1.scaleToFit(90, 90);
-		logo1.setAlignment(Image.MIDDLE);
-		logo1.setAlignment(Image.TOP);
-		logo1.setAlignment(Image.ALIGN_JUSTIFIED);
-		return logo1;
+	public Image getLogo() throws Exception {
+		String logo_url = "%s/citizen/static/media/od-default.1cff8773.png";
+
+//		byte[] b=org.apache.commons.codec.binary.Base64.decodeBase64(image_logo);
+
+		// Image logo1 = Image.getInstance(b);
+
+		return logo;
+	}
+
+	public static void main(String[] args) throws Exception {
+//	System.out.println(b);
 	}
 
 	/**
@@ -350,7 +379,8 @@ public abstract class PermitOrderService {
 					String noOfFloor = additionalFeature.getNoOfFloor(block);
 					// TODO: NA to be replaced by sub occupancy of that block-
 					dcrReportBlockDetail.setBlockNo(block.getNumber());
-					//dcrReportBlockDetail.setBlockNo(block.getNumber() + " (" + noOfFloor + " NA)");//raza
+					// dcrReportBlockDetail.setBlockNo(block.getNumber() + " (" + noOfFloor + "
+					// NA)");//raza
 					dcrReportBlockDetail.setCoverageArea(building.getCoverageArea());
 					dcrReportBlockDetail.setBuildingHeight(building.getBuildingHeight());
 					dcrReportBlockDetail.setDeclaredBuildingHeight(building.getDeclaredBuildingHeight());
@@ -456,7 +486,9 @@ public abstract class PermitOrderService {
 			if (affectedLandArea.getMeasurements() != null && !affectedLandArea.getMeasurements().isEmpty()) {
 				BigDecimal area = affectedLandArea.getMeasurements().stream().map(l -> l.getArea())
 						.reduce(BigDecimal::add).orElse(BigDecimal.ZERO).setScale(2, BigDecimal.ROUND_HALF_UP);
-				Chunk chunk = new Chunk(" - "+affectedLandArea.getName()+" affected area: " + area +DxfFileConstants.SQM +"\n", fontPara1Bold);
+				Chunk chunk = new Chunk(
+						" - " + affectedLandArea.getName() + " affected area: " + area + DxfFileConstants.SQM + "\n",
+						fontPara1Bold);
 				affectedAreas.add(chunk);
 			}
 		}
