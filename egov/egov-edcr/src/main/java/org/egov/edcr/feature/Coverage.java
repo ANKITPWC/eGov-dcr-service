@@ -69,6 +69,7 @@ import org.egov.common.entity.edcr.Plan;
 import org.egov.common.entity.edcr.Result;
 import org.egov.common.entity.edcr.ScrutinyDetail;
 import org.egov.edcr.constants.DxfFileConstants;
+import org.egov.edcr.constants.OdishaUlbs;
 import org.egov.edcr.od.OdishaUtill;
 import org.egov.edcr.utility.DcrConstants;
 import org.egov.infra.utils.StringUtils;
@@ -87,6 +88,7 @@ public class Coverage extends FeatureProcess {
 	private static final String RULE_ACTUAL_KEY = "coverage.actual";
 	// private static final BigDecimal ThirtyFive = BigDecimal.valueOf(35);
 	private static final BigDecimal Forty = BigDecimal.valueOf(40);
+	
 	/*
 	 * private static final BigDecimal FortyFive = BigDecimal.valueOf(45); private
 	 * static final BigDecimal Sixty = BigDecimal.valueOf(60); private static final
@@ -119,7 +121,7 @@ public class Coverage extends FeatureProcess {
 		validate(pl);
 		BigDecimal totalCoverage = BigDecimal.ZERO;
 		BigDecimal totalCoverageArea = BigDecimal.ZERO;
-
+		//LOG.info("use zones:"+pl.getPlanInformation().getLandUseZone());	
 		totalCoverageArea = updatedAmmenityArea(pl);
 		List<Block> blocks = new ArrayList<>();
 		blocks.addAll(pl.getBlocks());
@@ -163,7 +165,8 @@ public class Coverage extends FeatureProcess {
 		}
 
 		BigDecimal roadWidth = pl.getPlanInformation().getTotalRoadWidth();
-
+		
+		LOG.info("use zones:"+pl.getPlanInformation().getLandUseZone());
 		BigDecimal requiredCoverage = getPermissibleGroundCoverage(pl);
 		// if(requiredCoverage.compareTo(BigDecimal.ZERO)>0)
 		processCoverage(pl, StringUtils.EMPTY, totalCoverage, requiredCoverage);
@@ -284,13 +287,19 @@ public class Coverage extends FeatureProcess {
 				details.put(PERMISSIBLE, DxfFileConstants.NA);
 				details.put(STATUS, Result.Accepted.getResultVal());
 			}
-		}else if(DxfFileConstants.ALTERATION.equals(serviceType)) {
+		}else if(DxfFileConstants.ADDITION_AND_ALTERATION.equals(serviceType)) {
 			if (upperLimit.compareTo(BigDecimal.ZERO) > 0) {
-				details.put(PERMISSIBLE, upperLimit.toString()+DxfFileConstants.ALTERATION_MSG1);
-			}else {
-				details.put(PERMISSIBLE, DxfFileConstants.NA+DxfFileConstants.ALTERATION_MSG1);
+				details.put(PERMISSIBLE, upperLimit.toString());
+				if (coverage.doubleValue() <= upperLimit.doubleValue()) {
+					details.put(STATUS, Result.Accepted.getResultVal());
+				} else {
+					details.put(STATUS, Result.Not_Accepted.getResultVal());
+				}
+
+			} else {
+				details.put(PERMISSIBLE, DxfFileConstants.NA);
+				details.put(STATUS, Result.Accepted.getResultVal());
 			}
-			details.put(STATUS, Result.Verify.getResultVal());
 		}
 
 		scrutinyDetail.getDetail().add(details);
@@ -340,16 +349,33 @@ public class Coverage extends FeatureProcess {
 	}
 
 	private BigDecimal getPermissibleGroundCoverage(Plan pl) {
+		LOG.info("use zone1:"+pl.getPlanInformation().getLandUseZone());
+		
+		OdishaUlbs ulb = OdishaUlbs.getUlb(pl.getThirdPartyUserTenantld());
 
 		if (checkLowRiskBuildingCriteria(pl))
 			return BigDecimal.ZERO;
 
 		BigDecimal maxPermissibleGroundCoverage = BigDecimal.ZERO;
+		
+		LOG.info("use zone10:");	
 		switch (pl.getPlanInformation().getLandUseZone()) {
+			//OPEN SPACE USE ZONE
+			
 		case OPEN_SPACE_USE_ZONE:
-			if (getPublicOpenSpace(pl).compareTo(new BigDecimal("40")) < 0)
-				maxPermissibleGroundCoverage = new BigDecimal("30");
-			break;
+			//SPARIT AND ODA BOTH
+//			if(ulb.isSparitFlag() && getPublicOpenSpace(pl).compareTo(new BigDecimal("40")) < 0) {
+//				maxPermissibleGroundCoverage = new BigDecimal("50");	
+//			}
+			
+			LOG.info("use zone11:");
+			if (getPublicOpenSpace(pl).compareTo(new BigDecimal("40")) < 0) { 
+				maxPermissibleGroundCoverage = new BigDecimal("50");
+				LOG.info("Check Sprit LUZ: "+maxPermissibleGroundCoverage);
+			}
+			    break;
+			    
+			    
 		case ENVIRONMENTALLY_SENSITIVE_ZONE:
 			maxPermissibleGroundCoverage = new BigDecimal("40");
 			break;
@@ -380,7 +406,6 @@ public class Coverage extends FeatureProcess {
 
 	private BigDecimal getGeneralCriteria(Plan pl) {
 		BigDecimal buildingHeight = OdishaUtill.getMaxBuildingHeight(pl);
-		;
 		BigDecimal maxPermissibleGroundCoverage = BigDecimal.ZERO;
 		if (buildingHeight.compareTo(new BigDecimal("15")) < 0)
 			maxPermissibleGroundCoverage = BigDecimal.ZERO;
@@ -401,8 +426,10 @@ public class Coverage extends FeatureProcess {
 		for (Block block : pl.getBlocks()) {
 			for (Measurement measurement : block.getPlantationGreenStripes()) {
 				totalPublicOpenSace = totalPublicOpenSace.add(measurement.getArea());
+				//LOG.info(inPercentage);
 			}
 		}
+		LOG.info("totalPublicOpenSace"+totalPublicOpenSace);
 		inPercentage = totalPublicOpenSace.divide(pl.getPlot().getArea()).multiply(new BigDecimal("100"));
 		return inPercentage;
 	}
@@ -412,11 +439,14 @@ public class Coverage extends FeatureProcess {
 		OdishaUtill.updateAmmenity(pl);
 		OdishaUtill.updateBlock(pl);
 		OdishaUtill.setPlanInfoBlkWise(pl, DxfFileConstants.NUMBER_OF_OCCUPANTS_OR_USERS_OR_BED_BLK);
+		OdishaUtill.validateRestricatedOccupancies(pl);
 	}
 
 	private boolean checkLowRiskBuildingCriteria(Plan pl) {
 		OccupancyTypeHelper occupancyTypeHelper = pl.getVirtualBuilding().getMostRestrictiveFarHelper();
 		boolean isLowRiskBuilding = false;
+		LOG.info("inside low risk:");
+		
 		if (DxfFileConstants.OC_RESIDENTIAL.equals(occupancyTypeHelper.getType().getCode())) {
 
 			if (pl.getPlot().getArea().compareTo(new BigDecimal("500")) <= 0
@@ -429,9 +459,11 @@ public class Coverage extends FeatureProcess {
 		pl.getPlanInformation().setLowRiskBuilding(isLowRiskBuilding);
 
 		if (isLowRiskBuilding) {
+			LOG.info("inside low risk:true");
 			pl.getPlanInformation().setRiskType(DxfFileConstants.LOW);
 			pl.getPlanInformation().setRiskTypeDes(DxfFileConstants.LOW);
 		} else {
+			LOG.info("inside low risk:false");
 			pl.getPlanInformation().setRiskType(DxfFileConstants.HIGH);
 			pl.getPlanInformation().setRiskTypeDes(DxfFileConstants.OTHER_THAN_LOW);
 		}

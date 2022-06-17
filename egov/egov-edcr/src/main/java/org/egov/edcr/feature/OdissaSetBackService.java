@@ -104,7 +104,11 @@ public class OdissaSetBackService extends FeatureProcess {
 
 		OccupancyTypeHelper occupancyTypeHelper = pl.getVirtualBuilding().getMostRestrictiveFarHelper();
 		String serviceType = pl.getPlanInformation().getServiceType();
-
+		String scrutinyDetailKey = "Setback";
+		if(DxfFileConstants.ADDITION_AND_ALTERATION.equals(serviceType)) {
+			scrutinyDetailKey = "Setback - Proposed";
+			setbackExisting(pl);
+		}
 		for (Block block : pl.getBlocks()) {
 			ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
 			scrutinyDetail.addColumnHeading(1, RULE_NO);
@@ -113,7 +117,7 @@ public class OdissaSetBackService extends FeatureProcess {
 			scrutinyDetail.addColumnHeading(3, PERMISSIBLE);
 			scrutinyDetail.addColumnHeading(4, PROVIDED);
 			scrutinyDetail.addColumnHeading(5, STATUS);
-			scrutinyDetail.setKey("Block_" + block.getNumber() + "_" + "Setback");
+			scrutinyDetail.setKey("Block_" + block.getNumber() + "_" + scrutinyDetailKey);
 
 			for (SetBack setBack : block.getSetBacks()) {
 				SetBackData data = prepareSetback(pl, block, setBack);
@@ -510,10 +514,13 @@ public class OdissaSetBackService extends FeatureProcess {
 			else
 				setReport(RULE_37_TWO_B, MIN_FRONT_DESC, data.level.toString(), data.minFrontExpected.toString(),
 						data.minFrontProvided.toString(), Result.Not_Accepted, scrutinyDetail);
-		} else if (DxfFileConstants.ALTERATION.equals(serviceType)) {
-			setReport(RULE_37_TWO_B, MIN_FRONT_DESC, data.level.toString(),
-					data.minFrontExpected.toString() + DxfFileConstants.ALTERATION_MSG1,
-					data.minFrontProvided.toString(), Result.Verify, scrutinyDetail);
+		} else if (DxfFileConstants.ADDITION_AND_ALTERATION.equals(serviceType)) {
+			if (data.minFrontProvided.compareTo(data.minFrontExpected) >= 0)
+				setReport(RULE_37_TWO_B, MIN_FRONT_DESC, data.level.toString(), data.minFrontExpected.toString(),
+						data.minFrontProvided.toString(), Result.Accepted, scrutinyDetail);
+			else
+				setReport(RULE_37_TWO_B, MIN_FRONT_DESC, data.level.toString(), data.minFrontExpected.toString(),
+						data.minFrontProvided.toString(), Result.Not_Accepted, scrutinyDetail);
 		}
 
 	}
@@ -529,9 +536,13 @@ public class OdissaSetBackService extends FeatureProcess {
 			else
 				setReport(RULE_37_TWO_B, MIN_REAR_DESC, data.level.toString(), expected,
 						data.minRearProvided.toString(), Result.Not_Accepted, scrutinyDetail);
-		} else if (DxfFileConstants.ALTERATION.equals(serviceType)) {
-			setReport(RULE_37_TWO_B, MIN_REAR_DESC, data.level.toString(), expected + DxfFileConstants.ALTERATION_MSG1,
-					data.minRearProvided.toString(), Result.Verify, scrutinyDetail);
+		} else if (DxfFileConstants.ADDITION_AND_ALTERATION.equals(serviceType)) {
+			if (data.minRearProvided.compareTo(data.minRearExpected) >= 0)
+				setReport(RULE_37_TWO_B, MIN_REAR_DESC, data.level.toString(), expected,
+						data.minRearProvided.toString(), Result.Accepted, scrutinyDetail);
+			else
+				setReport(RULE_37_TWO_B, MIN_REAR_DESC, data.level.toString(), expected,
+						data.minRearProvided.toString(), Result.Not_Accepted, scrutinyDetail);
 		}
 	}
 
@@ -546,9 +557,13 @@ public class OdissaSetBackService extends FeatureProcess {
 			else
 				setReport(RULE_37_TWO_B, MIN_SIDE1_DESC, data.level.toString(), expected,
 						data.minSide1Provided.toString(), Result.Not_Accepted, scrutinyDetail);
-		} else if (DxfFileConstants.ALTERATION.equals(serviceType)) {
-			setReport(RULE_37_TWO_B, MIN_SIDE1_DESC, data.level.toString(), expected + DxfFileConstants.ALTERATION_MSG1,
-					data.minSide1Provided.toString(), Result.Verify, scrutinyDetail);
+		} else if (DxfFileConstants.ADDITION_AND_ALTERATION.equals(serviceType)) {
+			if (data.minSide1Provided.compareTo(data.minSide1Expected) >= 0)
+				setReport(RULE_37_TWO_B, MIN_SIDE1_DESC, data.level.toString(), expected,
+						data.minSide1Provided.toString(), Result.Accepted, scrutinyDetail);
+			else
+				setReport(RULE_37_TWO_B, MIN_SIDE1_DESC, data.level.toString(), expected,
+						data.minSide1Provided.toString(), Result.Not_Accepted, scrutinyDetail);
 		}
 	}
 
@@ -563,9 +578,13 @@ public class OdissaSetBackService extends FeatureProcess {
 			else
 				setReport(RULE_37_TWO_B, MIN_SIDE2_DESC, data.level.toString(), expected,
 						data.minSide2Provided.toString(), Result.Not_Accepted, scrutinyDetail);
-		} else if (DxfFileConstants.ALTERATION.equals(serviceType)) {
-			setReport(RULE_37_TWO_B, MIN_SIDE2_DESC, data.level.toString(), expected + DxfFileConstants.ALTERATION_MSG1,
-					data.minSide2Provided.toString(), Result.Verify, scrutinyDetail);
+		} else if (DxfFileConstants.ADDITION_AND_ALTERATION.equals(serviceType)) {
+			if (data.minSide2Provided.compareTo(data.minSide2Expected) >= 0)
+				setReport(RULE_37_TWO_B, MIN_SIDE2_DESC, data.level.toString(), expected,
+						data.minSide2Provided.toString(), Result.Accepted, scrutinyDetail);
+			else
+				setReport(RULE_37_TWO_B, MIN_SIDE2_DESC, data.level.toString(), expected,
+						data.minSide2Provided.toString(), Result.Not_Accepted, scrutinyDetail);
 		}
 	}
 
@@ -581,10 +600,13 @@ public class OdissaSetBackService extends FeatureProcess {
 			else
 				setReport(RULE_37_TWO_B, TOTAL_CUMULATIVA_FRONT_AND_REAR_DESC, data.level.toString(), expected,
 						data.totalCumulativeFrontAndRearProvided.toString(), Result.Not_Accepted, scrutinyDetail);
-		} else if (DxfFileConstants.ALTERATION.equals(serviceType)) {
-			setReport(RULE_37_TWO_B, TOTAL_CUMULATIVA_FRONT_AND_REAR_DESC, data.level.toString(),
-					expected + DxfFileConstants.ALTERATION_MSG1, data.totalCumulativeFrontAndRearProvided.toString(),
-					Result.Verify, scrutinyDetail);
+		} else if (DxfFileConstants.ADDITION_AND_ALTERATION.equals(serviceType)) {
+			if (data.totalCumulativeFrontAndRearProvided.compareTo(data.totalCumulativeFrontAndRearExpected) >= 0)
+				setReport(RULE_37_TWO_B, TOTAL_CUMULATIVA_FRONT_AND_REAR_DESC, data.level.toString(), expected,
+						data.totalCumulativeFrontAndRearProvided.toString(), Result.Accepted, scrutinyDetail);
+			else
+				setReport(RULE_37_TWO_B, TOTAL_CUMULATIVA_FRONT_AND_REAR_DESC, data.level.toString(), expected,
+						data.totalCumulativeFrontAndRearProvided.toString(), Result.Not_Accepted, scrutinyDetail);
 		}
 
 	}
@@ -602,10 +624,13 @@ public class OdissaSetBackService extends FeatureProcess {
 			else
 				setReport(RULE_37_TWO_B, TOTAL_CUMULATIVA_SIDE_DESC, data.level.toString(), expected,
 						data.totalCumulativeSideProvided.toString(), Result.Not_Accepted, scrutinyDetail);
-		} else if (DxfFileConstants.ALTERATION.equals(serviceType)) {
-			setReport(RULE_37_TWO_B, TOTAL_CUMULATIVA_SIDE_DESC, data.level.toString(),
-					expected + DxfFileConstants.ALTERATION_MSG1, data.totalCumulativeSideProvided.toString(),
-					Result.Verify, scrutinyDetail);
+		} else if (DxfFileConstants.ADDITION_AND_ALTERATION.equals(serviceType)) {
+			if (data.totalCumulativeSideProvided.compareTo(data.totalCumulativeSideExpected) >= 0)
+				setReport(RULE_37_TWO_B, TOTAL_CUMULATIVA_SIDE_DESC, data.level.toString(), expected,
+						data.totalCumulativeSideProvided.toString(), Result.Accepted, scrutinyDetail);
+			else
+				setReport(RULE_37_TWO_B, TOTAL_CUMULATIVA_SIDE_DESC, data.level.toString(), expected,
+						data.totalCumulativeSideProvided.toString(), Result.Not_Accepted, scrutinyDetail);
 		}
 	}
 
@@ -619,6 +644,73 @@ public class OdissaSetBackService extends FeatureProcess {
 		details.put(PROVIDED, provided);
 		details.put(STATUS, result.getResultVal());
 		scrutinyDetail.getDetail().add(details);
+	}
+	
+	private void setbackExisting(Plan pl) {
+		String scrutinyDetailKey = "Setback - Existing";
+		ScrutinyDetail scrutinyDetail = new ScrutinyDetail();
+		scrutinyDetail.addColumnHeading(1, RULE_NO);
+		scrutinyDetail.addColumnHeading(2, DESCRIPTION);
+		scrutinyDetail.addColumnHeading(3, PROVIDED);
+		scrutinyDetail.addColumnHeading(5, STATUS);
+		for(Block block:pl.getBlocks()) {
+			String blkNumber = block.getNumber();
+			scrutinyDetail.setKey("Block_" + blkNumber + "_" + scrutinyDetailKey);
+			
+			//Front
+			String frontSetBack = getPlanInfoKey(pl, String.format(DxfFileConstants.SETBACK_FRONT_EXISTING, blkNumber));
+			Map<String, String> frontDeatils = new HashMap<>();
+			frontDeatils.put(RULE_NO,RULE_37_TWO_B);
+			frontDeatils.put(DESCRIPTION, "Front setback");
+			frontDeatils.put(PROVIDED, frontSetBack);
+			frontDeatils.put(STATUS, Result.Verify.getResultVal());
+			scrutinyDetail.getDetail().add(frontDeatils);
+			
+			//Rear
+			String rearSetBack = getPlanInfoKey(pl, String.format(DxfFileConstants.SETBACK_REAR_EXISTING, blkNumber));
+			Map<String, String> rearDeatils = new HashMap<>();
+			rearDeatils.put(RULE_NO,RULE_37_TWO_B);
+			rearDeatils.put(DESCRIPTION, "Rear setback");
+			rearDeatils.put(PROVIDED, rearSetBack);
+			rearDeatils.put(STATUS, Result.Verify.getResultVal());
+			scrutinyDetail.getDetail().add(rearDeatils);
+			
+			//Left
+			String leftSetBack = getPlanInfoKey(pl, String.format(DxfFileConstants.SETBACK_LEFT_EXISTING, blkNumber));
+			Map<String, String> leftDeatils = new HashMap<>();
+			leftDeatils.put(RULE_NO,RULE_37_TWO_B);
+			leftDeatils.put(DESCRIPTION, "Left setback");
+			leftDeatils.put(PROVIDED, leftSetBack);
+			leftDeatils.put(STATUS, Result.Verify.getResultVal());
+			scrutinyDetail.getDetail().add(leftDeatils);
+			
+			
+			//Right
+			String rightSetBack = getPlanInfoKey(pl, String.format(DxfFileConstants.SETBACK_RIGHT_EXISTING, blkNumber));
+			Map<String, String> rightDeatils = new HashMap<>();
+			rightDeatils.put(RULE_NO,RULE_37_TWO_B);
+			rightDeatils.put(DESCRIPTION, "Right setback");
+			rightDeatils.put(PROVIDED, rightSetBack);
+			rightDeatils.put(STATUS, Result.Verify.getResultVal());
+			scrutinyDetail.getDetail().add(rightDeatils);
+			
+		}
+		
+		pl.getReportOutput().getScrutinyDetails().add(scrutinyDetail);
+	}
+	
+	private String getPlanInfoKey(Plan pl,String key) {
+		String value = DxfFileConstants.NA;
+		String v = pl.getPlanInfoProperties().get(key);
+		if(!DxfFileConstants.NA.equalsIgnoreCase(v)) {
+			try {
+				value = (new BigDecimal(v)).toString();
+				value = v;
+			}catch (Exception e) {
+				pl.addError(key, key+" is invalid in planinfo layer.");
+			}
+		}
+		return value;
 	}
 
 	@Override

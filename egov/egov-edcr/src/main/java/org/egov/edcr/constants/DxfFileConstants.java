@@ -646,12 +646,12 @@ public class DxfFileConstants {
 	private static final Map<String, String> SERVICE_TYPE = new ConcurrentHashMap<>();
 	static {
 		SERVICE_TYPE.put("NEW_CONSTRUCTION", "New Construction");
-		SERVICE_TYPE.put("ALTERATION", "Alteration");
+		SERVICE_TYPE.put("ADDITION_AND_ALTERATION", "Addition and Alteration");
 	}
 	
 	//from api
 	public static final String NEW_CONSTRUCTION="NEW_CONSTRUCTION";
-	public static final String ALTERATION="ALTERATION";
+	public static final String ADDITION_AND_ALTERATION="ALTERATION";
 	public static final String ALTERATION_MSG1=" (According to ODA (P&BS) Rules 2020)";
 	
 	
@@ -791,4 +791,9 @@ public class DxfFileConstants {
 	public static final String ADDITIONAL_TDR_IF_APPLICABLE_M2="ADDITIONAL_TDR_IF_APPLICABLE_M2";
 	public static final String FEATURE_RESTRICTED_AREA = "Restricted area";
 	public static final String SQM =" SQM";
+	
+	public static final String SETBACK_FRONT_EXISTING = "BLK_%s_SETBACK_FRONT_EXISTING"; 
+	public static final String SETBACK_REAR_EXISTING = "BLK_%s_SETBACK_REAR_EXISTING"; 
+	public static final String SETBACK_LEFT_EXISTING = "BLK_%s_SETBACK_LEFT_EXISTING"; 
+	public static final String SETBACK_RIGHT_EXISTING = "BLK_%s_SETBACK_RIGHT_EXISTING"; 
 }
