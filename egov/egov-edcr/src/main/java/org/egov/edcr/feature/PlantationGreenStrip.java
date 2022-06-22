@@ -134,8 +134,8 @@ public class PlantationGreenStrip extends FeatureProcess {
 //		} else {
 		if(DxfFileConstants.OPEN_SPACE_USE_ZONE.equals(pl.getPlanInformation().getLandUseZone())) {
 			
-			//required=new BigDecimal("0.50");
-			required = BigDecimal.ZERO;
+			required=new BigDecimal("0.50");
+			//required = BigDecimal.ZERO;
 		}else {
 			if(DxfFileConstants.FARM_HOUSE.equals(subType)
 				|| DxfFileConstants.COUNTRY_HOMES.equals(subType)) {
