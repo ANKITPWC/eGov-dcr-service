@@ -370,7 +370,7 @@ public class Coverage extends FeatureProcess {
 			
 			LOG.info("use zone11:");
 			if (getPublicOpenSpace(pl).compareTo(new BigDecimal("40")) < 0) { 
-				maxPermissibleGroundCoverage = new BigDecimal("50");
+				maxPermissibleGroundCoverage = new BigDecimal("30");
 				LOG.info("Check Sprit LUZ: "+maxPermissibleGroundCoverage);
 			}
 			    break;

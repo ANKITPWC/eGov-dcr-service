@@ -269,7 +269,7 @@ public class BuildingHeight extends FeatureProcess {
 		switch (plan.getPlanInformation().getLandUseZone()) {
 		case OPEN_SPACE_USE_ZONE:
 			
-				maxPermissibleHeight = new BigDecimal("7.0");
+				maxPermissibleHeight = new BigDecimal("3.5");
 				break;	
 			
 		case SPECIAL_HERITAGE_ZONE:
