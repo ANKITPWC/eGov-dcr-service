@@ -107,7 +107,12 @@ public abstract class PermitOrderService {
 	}
 	
 	public String getServiceType(Plan pl) {
-		return  DxfFileConstants.getServiceTypeList().get(pl.getPlanInformation().getServiceType());
+		try {
+			return  DxfFileConstants.getServiceTypeList().get(pl.getPlanInformation().getServiceType());
+		}catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
 	}
 	
 	/**
