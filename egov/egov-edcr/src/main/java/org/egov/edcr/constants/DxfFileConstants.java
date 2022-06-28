@@ -643,7 +643,7 @@ public class DxfFileConstants {
 	public static final String MAINRIVER = "MainRiver";
 	public static final String SUBRIVER = "SubRiver";
 
-	public static final Map<String, String> SERVICE_TYPE = new ConcurrentHashMap<>();
+	public static Map<String, String> SERVICE_TYPE = new ConcurrentHashMap<>();
 	static {
 		SERVICE_TYPE.put("NEW_CONSTRUCTION", "New Construction");
 		SERVICE_TYPE.put("ADDITION_AND_ALTERATION", "Addition and Alteration");
