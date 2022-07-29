@@ -70,6 +70,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.egov.common.entity.dcr.helper.EdcrApplicationInfo;
 import org.egov.common.entity.dcr.helper.ErrorDetail;
+import org.egov.common.entity.dcr.helper.PlanPreApproved;
 import org.egov.common.entity.edcr.Plan;
 import org.egov.common.entity.edcr.PlanInformation;
 import org.egov.commons.mdms.config.MdmsConfiguration;
@@ -102,6 +103,7 @@ import org.hibernate.Session;
 import org.hibernate.criterion.CriteriaSpecification;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
+import org.jfree.util.Log;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -130,6 +132,8 @@ public class EdcrRestService {
 	private static Logger LOG = Logger.getLogger(EdcrApplicationService.class);
 
 	public static final String FILE_DOWNLOAD_URL = "%s/edcr/rest/dcr/downloadfile/";
+
+	private static final String BPAPREAPPROVEDPLAN = "BPA6";
 
 	@Autowired
 	protected SecurityUtils securityUtils;
@@ -725,6 +729,7 @@ public class EdcrRestService {
 			String fileName = bpaApplication + "-" + edcrNo;
 			String bpaAppTenantId = permitOrderRequest.getBpaList().get(0).get("tenantId").toString();
 			String businessService = permitOrderRequest.getBpaList().get(0).get("businessService").toString();
+			InputStream reportStream = null;
 			
 			List<FileStoreMapper> fileStoreMappers = fileStoreMapperRepository.findByFileNameStartsWith(fileName);
 
@@ -732,12 +737,21 @@ public class EdcrRestService {
 				fileStoreMappers = new ArrayList<>();
 			}
 			fileName = fileName + "-V-" + fileStoreMappers.size() + ".pdf";
-
-			EdcrApplicationInfo edcrApplicationInfo = edcrExternalService.loadEdcrApplicationDetails(edcrNo);
-			Plan plan = edcrApplicationInfo.getPlan();
+			
+            if(businessService.equalsIgnoreCase(BPAPREAPPROVEDPLAN)) {
+            	PlanPreApproved  plan= edcrExternalService.loadPreApprovedData(edcrNo,permitOrderRequest);
+            	 
+            	 PermitOrderServicePAP permitOrderService = getPermitOrderServicePAPBean(businessService);
+     			 reportStream = permitOrderService.generateReportBPA6(plan, permitOrderRequest.getBpaList().get(0),
+     					permitOrderRequest.getRequestInfo());
+            }else {
+            	EdcrApplicationInfo edcrApplicationInfo = edcrExternalService.loadEdcrApplicationDetails(edcrNo);
+            	Plan plan = edcrApplicationInfo.getPlan();
+            
 			PermitOrderService permitOrderService = getPermitOrderServiceBean(businessService);
-			InputStream reportStream = permitOrderService.generateReport(plan, permitOrderRequest.getBpaList().get(0),
+			 reportStream = permitOrderService.generateReport(plan, permitOrderRequest.getBpaList().get(0),
 					permitOrderRequest.getRequestInfo());
+            }
 			FileStoreMapper fileStoreMapper = storePermitOrder(reportStream, fileName, bpaAppTenantId);
 			fileStoreMappers.add(fileStoreMapper);
 			fileStoreIds = fileStoreMappers.stream()
@@ -756,6 +770,16 @@ public class EdcrRestService {
 		PermitOrderService permitOrderService = null;
 		permitOrderService = (PermitOrderService) specificRuleService
 				.find("permitOrderService" + businessService);
+		if(permitOrderService == null)
+			throw new ApplicationRuntimeException("Permit order not supported for businessService: "+businessService);
+		return permitOrderService;
+	}
+	
+	private PermitOrderServicePAP getPermitOrderServicePAPBean(String businessService) {
+		PermitOrderServicePAP permitOrderService = null;
+		permitOrderService = (PermitOrderServicePAP) specificRuleService
+				.find("permitOrderServicePAP" + businessService);
+		Log.info(permitOrderService);
 		if(permitOrderService == null)
 			throw new ApplicationRuntimeException("Permit order not supported for businessService: "+businessService);
 		return permitOrderService;

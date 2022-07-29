@@ -6,7 +6,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class MdmsConfiguration {
 
-    @Value("${mdms.host:}")
+    
+
+	@Value("${mdms.host:}")
     private String mdmsHost;
 
     @Value("${mdms.searchurl:}")
@@ -20,8 +22,22 @@ public class MdmsConfiguration {
     
     @Value("${egov.noc.service.host:}")
     private String nocHost;
+    
+    @Value("${egov.bpa.service.host:}")
+    private String bpaHost;
+    
+    
+    
 
-    public String getMdmsHost() {
+    public String getBpaHost() {
+		return bpaHost;
+	}
+
+	public void setBpaHost(String bpaHost) {
+		this.bpaHost = bpaHost;
+	}
+
+	public String getMdmsHost() {
         return mdmsHost;
     }
 

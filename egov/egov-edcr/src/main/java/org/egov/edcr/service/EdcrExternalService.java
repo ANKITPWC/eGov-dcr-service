@@ -40,25 +40,51 @@
 
 package org.egov.edcr.service;
 
+import static org.egov.edcr.utility.DcrConstants.ROUNDMODE_MEASUREMENTS;
+
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.egov.common.entity.dcr.helper.AuditDetailsPreApproved;
+import org.egov.common.entity.dcr.helper.BlockPreApproved;
+import org.egov.common.entity.dcr.helper.BuildingPreapproved;
 import org.egov.common.entity.dcr.helper.EdcrApplicationInfo;
+import org.egov.common.entity.dcr.helper.PlanPreApproved;
+import org.egov.common.entity.dcr.helper.PreApprovedPlan;
+import org.egov.common.entity.dcr.helper.floorPreApproved;
 import org.egov.common.entity.edcr.Block;
 import org.egov.common.entity.edcr.Floor;
 import org.egov.common.entity.edcr.FloorDescription;
 import org.egov.common.entity.edcr.Occupancy;
 import org.egov.common.entity.edcr.Plan;
+import org.egov.edcr.contract.PermitOrderRequest;
 import org.egov.edcr.entity.EdcrApplicationDetail;
 import org.egov.edcr.utility.DcrConstants;
 import org.egov.infra.filestore.service.FileStoreService;
+import org.egov.infra.microservice.models.RequestInfo;
 import org.egov.infra.utils.DateUtils;
+import org.omg.CORBA.ObjectHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -81,26 +107,127 @@ public class EdcrExternalService {
     private static final String DETAILS_PLAN = "Details_Plan";
     private static final String FLOOR_PLAN = "Floor_Plans";
     private static final String FLOOR_PLAN_ELEVTN_SECTN = "Floor_Plans,_Elevations,_Sections";
-
+    
+    Object DrawingDetails =null;
+    
     @Autowired
     private EdcrApplicationDetailService edcrApplicationDetailService;
     @Autowired
     private FileStoreService fileStoreService;
+    @Autowired
+    private BpaService bpaService;
 
     public EdcrApplicationInfo loadEdcrApplicationDetails(String eDcrNumber) {
         EdcrApplicationDetail applicationDetail = edcrApplicationDetailService.findByDcrNumber(eDcrNumber);
         return buildDcrApplicationDetails(applicationDetail);
     }
+    
+    public PlanPreApproved loadPreApprovedData(String eDcrNumber,PermitOrderRequest permitOrderRequest) {
+    	
+    	
+    	
+    	List<PreApprovedPlan> preApprovedPlanResponse = bpaService.fetchPreApproved(permitOrderRequest.getRequestInfo(),eDcrNumber);
+    	System.out.println(preApprovedPlanResponse);
+    	return buildDcrPreApprovedApplicationdetails(preApprovedPlanResponse,permitOrderRequest);
+    }
 
-    public EdcrApplicationInfo buildDcrApplicationDetails(EdcrApplicationDetail applicationDetail) {
+    private PlanPreApproved buildDcrPreApprovedApplicationdetails(List<PreApprovedPlan> preApprovedPlanResponse,PermitOrderRequest permitOrderRequest ) {
+		// TODO Auto-generated method stub
+    	PlanPreApproved plan = new PlanPreApproved();
+    	Object obj = preApprovedPlanResponse.get(0);
+    	ObjectMapper mapper = new ObjectMapper();
+    	PreApprovedPlan preApprovedPlan= mapper.convertValue(
+    			obj, new TypeReference<PreApprovedPlan>() {});
+        
+        Object additionalDetails = permitOrderRequest.getBpaList().get(0).get("additionalDetails");
+         DrawingDetails = preApprovedPlan.getDrawingDetail();
+//        List nocs = (List) ((Map) nocResponse).get("Noc");
+        //String plotNo = (String ) ((Map)) DrawingDetails).get("plotNo");
+         System.out.println(additionalDetails);
+         //System.out.println((String ) ((Map) additionalDetails).get("plotNo"));
+         
+         Object planDetails = ((Map) additionalDetails).get("planDetail");
+         Object plot =  ((Map) planDetails).get("plot");
+         
+         Object planInformation = ((Map) planDetails).get("planInformation");
+        		 
+        plan.setPlotNo((String ) ((Map) plot).get("plotNo"));
+        
+        plan.setKhataNo((String ) ((Map) planInformation).get("khataNo"));
+        
+        plan.setPlotArea(new BigDecimal( (String )((Map) plot).get("area")));
+        
+        plan.setServiceType((String ) ((Map) DrawingDetails).get("serviceType"));
+        
+        plan.setFloorInfo((String ) ((Map) DrawingDetails).get("floorDescription"));
+        
+       // plan.setSubOccupancy((String ) ((Map) DrawingDetails).get("subOccupancy"));
+        
+        Object subocc = ((Map) DrawingDetails).get("subOccupancy");
+        
+        plan.setSubOccupancy((String)  ((Map) subocc).get("label"));
+        
+        plan.setRoadWidth(preApprovedPlan.getRoadWidth());
+        
+        plan.setTotalBuitUpArea(new BigDecimal((Double)  ((Map) DrawingDetails).get("totalBuitUpArea")));
+        
+        setTotalFloorAreaAndFar(plan,DrawingDetails);
+        
+       
+        return plan;
+		
+	}
+
+	private void setTotalFloorAreaAndFar(PlanPreApproved plan, Object drawingDetails) {
+		
+		Double floorArea = (Double) ((Map) DrawingDetails).get("totalCarpetArea");
+//		List<BlockPreApproved> blocks = ( List<BlockPreApproved>) ((Map) drawingDetails).get("blocks");
+//		System.out.println("blocks:"+blocks);
+//		BigDecimal floorArea = new BigDecimal("0");
+//		List<String> floorAreas = new ArrayList<>();
+//		List<BuildingPreapproved> buildings = new ArrayList<>();
+//		ObjectMapper mapper = new ObjectMapper();
+//		for (Object obj : blocks) {
+//			ObjectMapper mappers = new ObjectMapper();
+//			mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+//			List<BuildingPreapproved> 	building = mapper.convertValue(
+//	    			obj, new TypeReference<List<BuildingPreapproved>>() {});
+//			System.out.println("blocked:"+building);
+//		 buildings.addAll(building);
+//	}
+//		for (Object obj :buildings) {
+//			System.out.println("1");
+//			ObjectMapper mappers = new ObjectMapper();
+//			BuildingPreapproved building = mappers.convertValue(
+//	    			obj, new TypeReference<BuildingPreapproved>() {});
+//			System.out.println("2");
+//			List<String>	floorArrea = building.getFloors().stream().filter(f->f.getFloorArea()!=null).map(floorPreApproved::getFloorArea).collect(Collectors.toList());
+//			floorAreas.addAll(floorArrea);	
+//		}
+//		
+//		for(String floor : floorAreas) {
+//			floorArea = floorArea.add(new BigDecimal(floor));
+//			
+//		}
+		plan.setTotalfloorArea(new BigDecimal(floorArea));
+		BigDecimal plotArea = plan.getPlotArea();
+		if (plotArea.doubleValue() > 0) {
+		BigDecimal	providedFar = plan.getTotalfloorArea().divide(plotArea, 3,
+					ROUNDMODE_MEASUREMENTS);
+		plan.setProvidedFar(providedFar.doubleValue());
+		}
+//		plan.getFarDetails().setProvidedFar(providedFar);
+	}
+
+	public EdcrApplicationInfo buildDcrApplicationDetails(EdcrApplicationDetail applicationDetail) {
         EdcrApplicationInfo applicationInfo = new EdcrApplicationInfo();
-        applicationInfo.seteDcrApplicationId(applicationDetail.getApplication().getId());
+        applicationInfo.seteDcrApplicationId((applicationDetail.getApplication().getId()));
         applicationInfo
                 .setApplicationDate(DateUtils.toDefaultDateFormat(applicationDetail.getApplication().getApplicationDate()));
         applicationInfo.setCreatedDate(DateUtils.toDefaultDateTimeFormat(applicationDetail.getApplication().getCreatedDate()));
         applicationInfo.setApplicationNumber(applicationDetail.getApplication().getApplicationNumber());
         applicationInfo.setDcrNumber(applicationDetail.getDcrNumber());
-        applicationInfo.seteDcrApplicationId(applicationDetail.getApplication().getId());
+        applicationInfo.seteDcrApplicationId((applicationDetail.getApplication().getId()));
         applicationInfo.setDxfFile(applicationDetail.getDxfFileId());
         applicationInfo.setReportOutput(applicationDetail.getReportOutputId());
         applicationInfo.setProjectType(applicationDetail.getApplication().getProjectType());
@@ -264,4 +391,25 @@ public class EdcrExternalService {
             name = FloorDescription.GROUND_FLOOR.getFloorDescriptionVal();
         return name;
     }
+
+	public List<BlockPreApproved> getblockDetails() {
+		
+		List<BlockPreApproved> blocks = ( List<BlockPreApproved>) ((Map) DrawingDetails).get("blocks");
+	 
+		
+		return blocks;
+	}
+	/*
+	Object nocResponse = nocService.fetchNocs(requestInfo, tenantId, bpaApplicationNo);
+	Set<String> nocviewableNames = new HashSet<>();
+	if (Objects.nonNull(nocResponse) && nocResponse instanceof Map && ((Map) nocResponse).get("Noc") instanceof List
+			&& !CollectionUtils.isEmpty((List) ((Map) nocResponse).get("Noc"))) {
+		List nocs = (List) ((Map) nocResponse).get("Noc");
+		Set<String> nocNames = (Set<String>) nocs.stream().map(noc -> String.valueOf(((Map) noc).get("nocType")))
+				.collect(Collectors.toSet());
+	public Map<String, BigDecimal> getSetBackData() {	
+		List<BlockPreApproved> blocks = ( List<BlockPreApproved>) ((Map) DrawingDetails).get("blocks");
+	}*/
+		
+//	}
 }
