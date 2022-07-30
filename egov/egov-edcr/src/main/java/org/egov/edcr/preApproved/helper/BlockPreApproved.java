@@ -1,4 +1,4 @@
-package org.egov.common.entity.dcr.helper;
+package org.egov.edcr.preApproved.helper;
 
 import java.io.Serializable;
 import java.util.List;

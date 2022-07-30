@@ -28,10 +28,10 @@ import com.itextpdf.text.pdf.PdfWriter;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.egov.common.entity.dcr.helper.BlockPreApproved;
-import org.egov.common.entity.dcr.helper.PlanPreApproved;
-import org.egov.common.entity.dcr.helper.floorPreApproved;
-import org.egov.common.entity.dcr.helper.setBackPreApproved;
+import org.egov.edcr.preApproved.helper.BlockPreApproved;
+import org.egov.edcr.preApproved.helper.PlanPreApproved;
+import org.egov.edcr.preApproved.helper.floorPreApproved;
+import org.egov.edcr.preApproved.helper.setBackPreApproved;
 import org.egov.common.entity.edcr.DcrReportBlockDetail;
 import org.egov.common.entity.edcr.DcrReportFloorDetail;
 import org.egov.common.entity.edcr.OdishaParkingHelper;
@@ -52,7 +52,7 @@ public class PermitOrderServicePAPBPA6 extends PermitOrderServicePAP {
 	
 	
 	@Autowired 
-	private EdcrExternalService edcrExternalService;
+	private PreApprovedExternalService edcrExternalService;
 
 	public static String PARAGRAPH_ONE = "Permission under sub-section (3) of the Section-16 of the Odisha Development Authorities Act, 1982 is hereby granted in favour of;";
 	public static String ADDRESS = "LAXMIPRIYA PANDA AND OTHERS,";
@@ -109,9 +109,11 @@ public class PermitOrderServicePAPBPA6 extends PermitOrderServicePAP {
 	private Font fontBoldUnderlined = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Font.UNDERLINE);
 	
 	@Override
-	public InputStream generateReportBPA6(PlanPreApproved plan, LinkedHashMap bpaApplication, RequestInfo requestInfo) {
+	public InputStream generateReportBPA6(Plan plan, LinkedHashMap bpaApplication, RequestInfo requestInfo) {
 		try {
-			return createPdf(plan, bpaApplication, requestInfo);
+			String edcrNo = bpaApplication.get("edcrNumber").toString();
+			PlanPreApproved  plans= edcrExternalService.loadPreApprovedData(edcrNo,bpaApplication,requestInfo);
+			return createPdf(plans, bpaApplication, requestInfo);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new ApplicationRuntimeException("Error while generating permit order pdf", e);
@@ -507,7 +509,7 @@ public class PermitOrderServicePAPBPA6 extends PermitOrderServicePAP {
 			for (int k =0;k<floorDetails.size();k++) {
 				PdfPCell floorNameCell = new PdfPCell();
 				floorPreApproved floor =	getfloorinfo(floorDetails,k);
-				Phrase floorNamephrase = new Phrase(floor.getFloorNo(), fontPara1);
+				Phrase floorNamephrase = new Phrase(floor.getFloorName(), fontPara1);
 				floorNameCell.addElement(floorNamephrase);
 				table1.addCell(floorNameCell);
 				PdfPCell floorAreaCell = new PdfPCell();

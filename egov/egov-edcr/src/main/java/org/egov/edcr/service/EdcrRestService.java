@@ -70,7 +70,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.egov.common.entity.dcr.helper.EdcrApplicationInfo;
 import org.egov.common.entity.dcr.helper.ErrorDetail;
-import org.egov.common.entity.dcr.helper.PlanPreApproved;
+
 import org.egov.common.entity.edcr.Plan;
 import org.egov.common.entity.edcr.PlanInformation;
 import org.egov.commons.mdms.config.MdmsConfiguration;
@@ -110,6 +110,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -167,6 +169,10 @@ public class EdcrRestService {
 
 	@Autowired
 	private EdcrExternalService edcrExternalService;
+	
+	
+    
+	
 
 	@Value("${download.url.support.flage}")
 	private boolean downloadUrlSupportFlage;
@@ -738,15 +744,16 @@ public class EdcrRestService {
 			}
 			fileName = fileName + "-V-" + fileStoreMappers.size() + ".pdf";
 			
+			Plan plan = null;
+			
+			
             if(businessService.equalsIgnoreCase(BPAPREAPPROVEDPLAN)) {
-            	PlanPreApproved  plan= edcrExternalService.loadPreApprovedData(edcrNo,permitOrderRequest);
-            	 
-            	 PermitOrderServicePAP permitOrderService = getPermitOrderServicePAPBean(businessService);
-     			 reportStream = permitOrderService.generateReportBPA6(plan, permitOrderRequest.getBpaList().get(0),
+            PermitOrderServicePAP permitOrderService = getPermitOrderServicePAPBean(businessService);
+     		reportStream = permitOrderService.generateReportBPA6(plan, permitOrderRequest.getBpaList().get(0),
      					permitOrderRequest.getRequestInfo());
             }else {
             	EdcrApplicationInfo edcrApplicationInfo = edcrExternalService.loadEdcrApplicationDetails(edcrNo);
-            	Plan plan = edcrApplicationInfo.getPlan();
+            	 plan = edcrApplicationInfo.getPlan();
             
 			PermitOrderService permitOrderService = getPermitOrderServiceBean(businessService);
 			 reportStream = permitOrderService.generateReport(plan, permitOrderRequest.getBpaList().get(0),

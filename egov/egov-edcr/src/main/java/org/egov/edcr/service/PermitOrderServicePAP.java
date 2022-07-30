@@ -30,11 +30,11 @@ import com.jayway.jsonpath.JsonPath;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.egov.common.entity.dcr.helper.BlockPreApproved;
-import org.egov.common.entity.dcr.helper.PlanPreApproved;
-import org.egov.common.entity.dcr.helper.PreApprovedPlan;
-import org.egov.common.entity.dcr.helper.floorPreApproved;
-import org.egov.common.entity.dcr.helper.setBackPreApproved;
+import org.egov.edcr.preApproved.helper.BlockPreApproved;
+import org.egov.edcr.preApproved.helper.PlanPreApproved;
+import org.egov.edcr.preApproved.helper.PreApprovedPlan;
+import org.egov.edcr.preApproved.helper.floorPreApproved;
+import org.egov.edcr.preApproved.helper.setBackPreApproved;
 import org.egov.common.entity.edcr.AdditionalReportDetail;
 import org.egov.common.entity.edcr.Block;
 import org.egov.common.entity.edcr.Building;
@@ -138,8 +138,8 @@ public abstract class PermitOrderServicePAP {
 	
 	
 
-	//public abstract InputStream generateReport(Plan plan, LinkedHashMap bpaApplication, RequestInfo requestInfo);
-	public abstract InputStream generateReportBPA6(PlanPreApproved plan, LinkedHashMap bpaApplication, RequestInfo requestInfo);
+	public abstract InputStream generateReportBPA6(Plan plan, LinkedHashMap bpaApplication, RequestInfo requestInfo);
+	//public abstract InputStream generateReportBPA6(PlanPreApproved plan, LinkedHashMap bpaApplication, RequestInfo requestInfo);
 	@Autowired
 	private EdcrApplicationSettings edcrApplicationSettings;
 	

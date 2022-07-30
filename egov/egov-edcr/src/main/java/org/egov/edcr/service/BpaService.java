@@ -4,11 +4,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.egov.common.entity.dcr.helper.PreApprovedPlan;
+
 import org.egov.commons.mdms.config.MdmsConfiguration;
 import org.egov.commons.service.RestCallService;
 import org.egov.infra.microservice.models.RequestInfo;
 import org.springframework.stereotype.Service;
+
+import org.egov.edcr.preApproved.helper.PreApprovedPlan;
 
 @Service
 public class BpaService {
